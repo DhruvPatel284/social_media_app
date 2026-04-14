@@ -1,0 +1,214 @@
+<%- contentFor('HeaderCss') %>
+<!-- Sweet Alert css-->
+<link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+<%- contentFor('body') %>
+<div class="">
+  <div class="row w-50">
+    <div class="">
+      <div class="card">
+        <div class="card-header align-items-center d-flex">
+          <h4 class="card-title mb-0 flex-grow-1">Create User Form</h4>
+        </div>
+
+        <div class="card-body">
+
+          <!-- General error -->
+          <% if (errors && errors.general) { %>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="ri-error-warning-line me-2"></i>
+            <%= errors.general[0] %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          <% } %>
+
+          <div class="live-preview">
+            <form
+              class="needs-validation"
+              id="create-user-form"
+              action="/admin/users"
+              method="POST"
+              enctype="multipart/form-data"
+              novalidate
+            >
+              <!-- Name -->
+              <div class="mb-3">
+                <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control <%= errors && errors.name ? 'is-invalid' : '' %>"
+                  name="name"
+                  id="name"
+                  value="<%= old ? old.name : '' %>"
+                  placeholder="Enter full name"
+                  required
+                />
+                <% if (errors && errors.name) { %>
+                <div class="invalid-feedback"><%= errors.name[0] %></div>
+                <% } %>
+              </div>
+
+              <!-- Phone Number -->
+              <div class="mb-3">
+                <label for="phoneNumber" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                <input
+                  type="tel"
+                  class="form-control <%= errors && errors.phoneNumber ? 'is-invalid' : '' %>"
+                  name="phoneNumber"
+                  id="phoneNumber"
+                  value="<%= old ? old.phoneNumber : '' %>"
+                  placeholder="+(245) 451 45123"
+                  required
+                />
+                <% if (errors && errors.phoneNumber) { %>
+                <div class="invalid-feedback"><%= errors.phoneNumber[0] %></div>
+                <% } %>
+              </div>
+
+              <!-- Email -->
+              <div class="mb-3">
+                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                <input
+                  type="email"
+                  class="form-control <%= errors && errors.email ? 'is-invalid' : '' %>"
+                  name="email"
+                  id="email"
+                  value="<%= old ? old.email : '' %>"
+                  placeholder="example@gmail.com"
+                  required
+                />
+                <% if (errors && errors.email) { %>
+                <div class="invalid-feedback"><%= errors.email[0] %></div>
+                <% } %>
+                <div class="form-text text-muted">
+                  A welcome email with login details will be sent to this address.
+                </div>
+              </div>
+
+              <!-- Password -->
+              <div class="mb-3">
+                <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                <input
+                  type="password"
+                  class="form-control <%= errors && errors.password ? 'is-invalid' : '' %>"
+                  name="password"
+                  id="password"
+                  placeholder="Enter password"
+                  required
+                />
+                <% if (errors && errors.password) { %>
+                <div class="invalid-feedback"><%= errors.password[0] %></div>
+                <% } %>
+              </div>
+
+              <!-- Profile Image (optional) -->
+              <div class="mb-4">
+                <label for="profile_image" class="form-label">
+                  Profile Image <small class="text-muted">(optional, max 2 MB)</small>
+                </label>
+                <input
+                  type="file"
+                  class="form-control"
+                  name="profile_image"
+                  id="profile_image"
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                />
+                <div class="form-text text-muted">
+                  Allowed formats: JPEG, PNG, GIF, WebP
+                </div>
+                <!-- Preview -->
+                <div id="image-preview" class="mt-2" style="display:none;">
+                  <img id="preview-img" src="" alt="Preview"
+                    style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #e9ebec;" />
+                </div>
+              </div>
+
+              <!-- Submit -->
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="ri-user-add-line me-1"></i> Create User
+                </button>
+                <a href="/admin/users" class="btn btn-light">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('FooterJs') %>
+
+<!-- Sweet Alerts js -->
+<script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<script>
+  // Profile image validation + preview
+  document.getElementById('profile_image').addEventListener('change', function () {
+    const file = this.files[0];
+    const preview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+
+    if (!file) {
+      preview.style.display = 'none';
+      return;
+    }
+
+    // Validate type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid File Type',
+        text: `"${file.name}" is not a valid image. Please upload JPEG, PNG, GIF, or WebP only.`,
+        confirmButtonColor: '#3085d6',
+      });
+      this.value = '';
+      preview.style.display = 'none';
+      return;
+    }
+
+    // Validate size (2 MB)
+    if (file.size > 2 * 1024 * 1024) {
+      Swal.fire({
+        icon: 'error',
+        title: 'File Too Large',
+        text: `"${file.name}" exceeds the 2 MB limit. Please choose a smaller image.`,
+        confirmButtonColor: '#3085d6',
+      });
+      this.value = '';
+      preview.style.display = 'none';
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewImg.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Client-side email format check on blur
+  document.getElementById('email').addEventListener('blur', function () {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    const val = this.value.trim();
+
+    if (val && !emailRegex.test(val)) {
+      this.classList.add('is-invalid');
+      // Show or update inline feedback
+      let feedback = this.nextElementSibling;
+      if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+        feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback';
+        this.parentNode.insertBefore(feedback, this.nextSibling);
+      }
+      feedback.textContent = `"${val}" is not a valid email address.`;
+    } else {
+      this.classList.remove('is-invalid');
+      this.classList.add('is-valid');
+    }
+  });
+</script>

@@ -1,0 +1,252 @@
+<%- contentFor('HeaderCss') %>
+<link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+<style>
+  .user-card {
+    transition: all 0.3s ease;
+  }
+  .user-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  .user-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .avatar-circle-user {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 24px;
+  }
+</style>
+
+<%- contentFor('body') %>
+
+<div class="row">
+  <div class="col-12">
+    
+    <!-- Header -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <h4 class="mb-1"><%= profileUser.name %>'s Followers</h4>
+            <p class="text-muted mb-0">
+              <i class="ri-group-line me-1"></i>
+              <%= totalFollowers %> <%= totalFollowers === 1 ? 'Follower' : 'Followers' %>
+            </p>
+          </div>
+          <a href="/user/profile/<%= profileUser.id === user.id ? '' : profileUser.id %>" class="btn btn-light">
+            <i class="ri-arrow-left-line me-1"></i> Back to Profile
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Followers List -->
+    <% if (followers && followers.length > 0) { %>
+      <div class="row">
+        <% followers.forEach(function(follower) { %>
+          <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+            <div class="card user-card h-100">
+              <div class="card-body">
+                <div class="text-center mb-3">
+                  <a href="/user/profile/<%= follower.id %>">
+                    <% if (follower.profile_image) { %>
+                      <img src="/uploads/users/<%= follower.profile_image %>" class="user-avatar mb-2" alt="<%= follower.name %>">
+                    <% } else { %>
+                      <div class="avatar-circle-user bg-primary-subtle text-primary mx-auto mb-2">
+                        <%= follower.name.charAt(0).toUpperCase() %>
+                      </div>
+                    <% } %>
+                  </a>
+                  <h6 class="mb-1">
+                    <a href="/user/profile/<%= follower.id %>" class="text-dark">
+                      <%= follower.name %>
+                    </a>
+                  </h6>
+                  <p class="text-muted mb-0 small"><%= follower.email %></p>
+                </div>
+
+                <div class="d-grid gap-2">
+                  <% if (profileUser.id === user.id) { %>
+                    <button
+                      class="btn btn-soft-danger btn-sm"
+                      data-bs-toggle="modal"
+                      data-bs-target="#removeFollowerModal"
+                      onclick="prepareRemoveFollower('<%= follower.id %>')"
+                    >
+                      <i class="ri-user-unfollow-line me-1"></i> Remove
+                    </button>
+                  <% } %>
+                  <a href="/user/profile/<%= follower.id %>" class="btn btn-soft-primary btn-sm">
+                    <i class="ri-eye-line me-1"></i> View Profile
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+
+      <!-- Pagination -->
+      <% if (totalPages > 1) { %>
+      <div class="row">
+        <div class="col-12">
+          <nav aria-label="Followers pagination">
+            <ul class="pagination justify-content-center">
+              
+              <!-- Previous -->
+              <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="?page=<%= currentPage - 1 %>">
+                  <i class="ri-arrow-left-s-line"></i> Previous
+                </a>
+              </li>
+
+              <!-- Page Numbers -->
+              <% 
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, currentPage + 2);
+              %>
+
+              <% if (startPage > 1) { %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=1">1</a>
+                </li>
+                <% if (startPage > 2) { %>
+                  <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                  </li>
+                <% } %>
+              <% } %>
+
+              <% for (let i = startPage; i <= endPage; i++) { %>
+                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                  <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                </li>
+              <% } %>
+
+              <% if (endPage < totalPages) { %>
+                <% if (endPage < totalPages - 1) { %>
+                  <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                  </li>
+                <% } %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=<%= totalPages %>"><%= totalPages %></a>
+                </li>
+              <% } %>
+
+              <!-- Next -->
+              <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                <a class="page-link" href="?page=<%= currentPage + 1 %>">
+                  Next <i class="ri-arrow-right-s-line"></i>
+                </a>
+              </li>
+
+            </ul>
+          </nav>
+        </div>
+      </div>
+      <% } %>
+
+    <% } else { %>
+      <!-- Empty State -->
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <lord-icon src="https://cdn.lordicon.com/hrqwmuhr.json" trigger="loop" colors="primary:#405189" style="width:100px;height:100px"></lord-icon>
+          <h5 class="mt-3">No Followers Yet</h5>
+          <p class="text-muted">
+            <% if (profileUser.id === user.id) { %>
+              You don't have any followers yet. Keep posting great content!
+            <% } else { %>
+              <%= profileUser.name.split(' ')[0] %> doesn't have any followers yet.
+            <% } %>
+          </p>
+        </div>
+      </div>
+    <% } %>
+
+  </div>
+</div>
+<%- contentFor('FooterJs') %>
+<script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<!-- Remove Follower Confirmation Modal -->
+<div class="modal fade zoomIn" id="removeFollowerModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="removeFollowerModal-close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="remove-follower-form" method="POST">
+          <div class="mt-2 text-center">
+            <lord-icon
+              src="https://cdn.lordicon.com/gsqxdxog.json"
+              trigger="loop"
+              colors="primary:#f7b84b,secondary:#f06548"
+              style="width: 100px; height: 100px"
+            ></lord-icon>
+            <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+              <h4>Are you sure?</h4>
+              <p class="text-muted mx-4 mb-0">
+                Are you sure you want to remove this follower?
+              </p>
+              <input type="hidden" id="remove-follower-target-id" />
+            </div>
+          </div>
+          <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+            <button type="button" class="btn w-sm btn-light" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn w-sm btn-danger" id="remove-follower-confirm">Yes, Remove</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function prepareRemoveFollower(userId) {
+  document.getElementById('remove-follower-target-id').value = userId;
+}
+
+document.getElementById('remove-follower-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const targetUserId = document.getElementById('remove-follower-target-id').value;
+  if (!targetUserId) return;
+
+  const submitBtn = document.getElementById('remove-follower-confirm');
+  const originalText = submitBtn.innerText;
+
+  try {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+    const response = await fetch(`/user/profile/${targetUserId}/remove-follower`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (response.ok) {
+      location.reload();
+    } else {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to remove follower');
+    }
+  } catch (error) {
+    console.error('Remove follower error:', error);
+    Swal.fire('Error', error.message || 'An unexpected error occurred', 'error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerText = originalText;
+  }
+});
+</script>

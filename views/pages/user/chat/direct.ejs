@@ -1,0 +1,123 @@
+<%- contentFor('HeaderCss') %>
+  <link rel="stylesheet" href="/assets/libs/glightbox/css/glightbox.min.css" />
+  <link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+  <%- contentFor('body') %>
+
+    <div class="chat-wrapper d-lg-flex gap-1 mx-n4 mt-n4 p-1">
+      <div class="user-chat w-100 overflow-hidden">
+        <div class="chat-content d-lg-flex">
+          <div class="w-100 overflow-hidden position-relative">
+            <div class="position-relative" id="users-chat">
+              <div class="p-3 user-chat-topbar">
+                <div class="row align-items-center">
+                  <div class="col-sm-6 col-8">
+                    <div class="d-flex align-items-center">
+                      <div class="flex-grow-1 overflow-hidden">
+                        <div class="d-flex align-items-center">
+                          <div class="flex-shrink-0 chat-user-img user-own-img align-self-center me-3 ms-0">
+                            <% if (otherUser.profile_image) { %>
+                              <img src="/uploads/users/<%= otherUser.profile_image %>" class="rounded-circle avatar-xs"
+                                alt="" />
+                              <% } else { %>
+                                <img src="/assets/images/users/user-dummy-img.jpg" class="rounded-circle avatar-xs"
+                                  alt="" />
+                                <% } %>
+                                  <span class="user-status"></span>
+                          </div>
+                          <div class="flex-grow-1 overflow-hidden">
+                            <h5 class="text-truncate mb-0 fs-16">
+                              <a class="text-reset username" href="javascript:void(0);">
+                                <%= otherUser.name %>
+                              </a>
+                            </h5>
+                            <p class="text-truncate text-muted fs-14 mb-0 userStatus">
+                              <small></small>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 col-4">
+                    <ul class="list-inline user-chat-nav text-end mb-0">
+                      <li class="list-inline-item m-0">
+                        <a href="/user/profile/<%= otherUser.id %>" class="btn btn-ghost-secondary btn-icon"
+                          title="View Profile">
+                          <i data-feather="user" class="icon-sm"></i>
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chat-conversation p-3 p-lg-4" id="chat-conversation" data-simplebar>
+                <div id="elmLoader" class="text-center">
+                  <div class="spinner-border text-primary avatar-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+                <ul class="list-unstyled chat-conversation-list" id="users-conversation"></ul>
+              </div>
+
+              <div class="chat-input-section p-3 p-lg-4">
+                <form id="chatinput-form">
+                  <div class="row g-0 align-items-center">
+                    <div class="col-auto">
+                      <div class="chat-input-links me-2">
+                        <div class="links-list-item">
+                          <button type="button" class="btn btn-link text-decoration-none emoji-btn" id="emoji-btn">
+                            <i class="bx bx-smile align-middle"></i>
+                          </button>
+                        </div>
+                        <div class="links-list-item">
+                          <button type="button" class="btn btn-link text-decoration-none" id="attach-file-btn"
+                            title="Attach file">
+                            <i class="ri-attachment-2 align-middle fs-16"></i>
+                          </button>
+                          <input type="file" id="chat-file-input" class="d-none"
+                            accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="chat-input-feedback">Please Enter a Message</div>
+                      <input type="text" class="form-control chat-input bg-light border-light" id="chat-input"
+                        placeholder="Type your message..." autocomplete="off" />
+                    </div>
+                    <div class="col-auto">
+                      <div class="chat-input-links ms-2">
+                        <div class="links-list-item">
+                          <button type="submit" class="btn btn-success chat-send waves-effect waves-light">
+                            <i class="ri-send-plane-2-fill align-bottom"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- contentFor('FooterJs') %>
+      <script src="/assets/libs/glightbox/js/glightbox.min.js"></script>
+      <script src="/assets/libs/fg-emoji-picker/fgEmojiPicker.js"></script>
+      <script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+      <script>
+        window.__CHAT_CONFIG__ = {
+          mode: 'direct',
+          apiBase: '/user/chats/api',
+          selfUserId: '<%= user.id %>',
+          chatId: <%= chatId %>,
+          otherUserId: '<%= otherUser.id %>',
+            otherUserName: '<%- otherUser.name.replace(/' / g, "\\'") %> ',
+        otherUserProfileImage: '<%= otherUser.profile_image ? ("/uploads/users/" + otherUser.profile_image) : "" %>',
+  };
+      </script>
+      <script src="/socket.io/socket.io.js"></script>
+      <script src="/assets/js/pages/user-chat.init.js"></script>

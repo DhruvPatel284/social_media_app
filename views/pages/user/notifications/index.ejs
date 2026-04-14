@@ -1,0 +1,555 @@
+<%- contentFor('HeaderCss') %>
+  <link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+  <style>
+    .notification-item {
+      transition: all 0.3s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .notification-item:hover {
+      background: #f8f9fa;
+    }
+
+    .notification-item.unread {
+      background: #f0f7ff;
+      border-left-color: #405189;
+    }
+
+    .notification-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .avatar-circle-notif {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .notification-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      border: 2px solid white;
+    }
+
+    .nav-tabs-custom .nav-link {
+      border: none;
+      color: #878a99;
+      padding: 12px 20px;
+      transition: all 0.3s;
+    }
+
+    .nav-tabs-custom .nav-link:hover {
+      color: #405189;
+      background: #f3f6f9;
+    }
+
+    .nav-tabs-custom .nav-link.active {
+      color: #0ab39c;
+      background: #0ab39c1a;
+      border-bottom: 2px solid #0ab39c;
+    }
+
+    .nav-tabs-custom .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+    }
+  </style>
+
+  <%- contentFor('body') %>
+
+    <div class="row">
+      <div class="col-12">
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <div>
+                <h4 class="mb-1">Notifications</h4>
+                <p class="text-muted mb-0">
+                  <% if (unreadCount> 0) { %>
+                    <span class="badge bg-primary">
+                      <%= unreadCount %> Unread
+                    </span>
+                    <% } else { %>
+                      All caught up!
+                      <% } %>
+                </p>
+              </div>
+              <div>
+                <% if (unreadCount> 0) { %>
+                  <button class="btn btn-soft-primary me-2" onclick="markAllAsRead()">
+                    <i class="ri-check-double-line me-1"></i> Mark All Read
+                  </button>
+                  <% } %>
+                    <button class="btn btn-soft-danger" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal"
+                      onclick="prepareDelete('bulk')">
+                      <i class="ri-delete-bin-line me-1"></i> Delete Read
+                    </button>
+              </div>
+            </div>
+
+            <ul class="nav nav-tabs nav-tabs-custom nav-success" role="tablist">
+              <li class="nav-item" role="presentation">
+                <a class="nav-link <%= !filter || filter === 'all' ? 'active' : '' %>"
+                  href="/user/notifications?filter=all">
+                  <i class="ri-checkbox-multiple-line me-1"></i> All
+                  <% if (counts.all> 0) { %>
+                    <span class="badge bg-secondary ms-1">
+                      <%= counts.all %>
+                    </span>
+                    <% } %>
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link <%= filter === 'like' ? 'active' : '' %>" href="/user/notifications?filter=like">
+                  <i class="ri-heart-line me-1"></i> Likes
+                  <% if (counts.like> 0) { %>
+                    <span class="badge bg-danger ms-1">
+                      <%= counts.like %>
+                    </span>
+                    <% } %>
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link <%= filter === 'comment' ? 'active' : '' %>"
+                  href="/user/notifications?filter=comment">
+                  <i class="ri-chat-3-line me-1"></i> Comments
+                  <% if (counts.comment> 0) { %>
+                    <span class="badge bg-primary ms-1">
+                      <%= counts.comment %>
+                    </span>
+                    <% } %>
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link <%= filter === 'follow' ? 'active' : '' %>" href="/user/notifications?filter=follow">
+                  <i class="ri-user-follow-line me-1"></i> Follows
+                  <% if (counts.follow> 0) { %>
+                    <span class="badge bg-success ms-1">
+                      <%= counts.follow %>
+                    </span>
+                    <% } %>
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link <%= filter === 'follow_request' ? 'active' : '' %>"
+                  href="/user/notifications?filter=follow_request">
+                  <i class="ri-user-add-line me-1"></i> Requests
+                  <% if (counts.follow_request> 0) { %>
+                    <span class="badge bg-warning ms-1">
+                      <%= counts.follow_request %>
+                    </span>
+                    <% } %>
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link <%= filter === 'follow_accept' ? 'active' : '' %>"
+                  href="/user/notifications?filter=follow_accept">
+                  <i class="ri-user-received-line me-1"></i> Accepted
+                  <% if (counts.follow_accept> 0) { %>
+                    <span class="badge bg-info ms-1">
+                      <%= counts.follow_accept %>
+                    </span>
+                    <% } %>
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link <%= filter === 'group_add' || filter === 'group_remove' ? 'active' : '' %>"
+                  href="/user/notifications?filter=group_add">
+                  <i class="ri-group-line me-1"></i> Groups
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body p-0">
+            <% if (notifications && notifications.length> 0) { %>
+              <div id="notificationsList">
+                <% notifications.forEach(function(notification) { %>
+                  <div class="notification-item <%= notification.isRead ? '' : 'unread' %> p-3 border-bottom"
+                    id="notif-<%= notification.id %>" data-notif-id="<%= notification.id %>">
+                    <div class="d-flex align-items-start">
+
+                      <div class="position-relative me-3">
+                        <a href="/user/profile/<%= notification.actor.id %>">
+                          <% if (notification.actor.profile_image) { %>
+                            <img src="/uploads/users/<%= notification.actor.profile_image %>"
+                              class="notification-avatar" alt="<%= notification.actor.name %>">
+                            <% } else { %>
+                              <div class="avatar-circle-notif bg-info-subtle text-info">
+                                <%= notification.actor.name.charAt(0).toUpperCase() %>
+                              </div>
+                              <% } %>
+                        </a>
+                        <div class="notification-icon 
+                      <%= notification.type === 'like' ? 'bg-danger' : '' %>
+                      <%= notification.type === 'comment' ? 'bg-primary' : '' %>
+                      <%= notification.type === 'follow' ? 'bg-success' : '' %>
+                      <%= notification.type === 'follow_request' ? 'bg-warning' : '' %>
+                      <%= notification.type === 'follow_accept' ? 'bg-info' : '' %>
+                      <%= notification.type === 'follow_reject' ? 'bg-secondary' : '' %>
+                      <%= notification.type === 'group_add' ? 'bg-teal' : '' %>
+                      <%= notification.type === 'group_remove' ? 'bg-danger' : '' %>
+                    ">
+                          <% if (notification.type==='like' ) { %>
+                            <i class="ri-heart-fill text-white"></i>
+                            <% } else if (notification.type==='comment' ) { %>
+                              <i class="ri-chat-3-fill text-white"></i>
+                              <% } else if (notification.type==='follow' ) { %>
+                                <i class="ri-user-add-fill text-white"></i>
+                                <% } else if (notification.type==='follow_request' ) { %>
+                                  <i class="ri-user-add-line text-white"></i>
+                                  <% } else if (notification.type==='follow_accept' ) { %>
+                                    <i class="ri-checkbox-circle-fill text-white"></i>
+                                    <% } else if (notification.type==='follow_reject' ) { %>
+                                      <i class="ri-close-circle-fill text-white"></i>
+                                      <% } else if (notification.type==='group_add' ) { %>
+                                        <i class="ri-group-fill text-white"></i>
+                                        <% } else if (notification.type==='group_remove' ) { %>
+                                          <i class="ri-group-line text-white"></i>
+                                          <% } %>
+                        </div>
+                      </div>
+
+                      <div class="flex-grow-1">
+                        <% let message='' ; let link='' ; if (notification.type==='like' ) { message=`<strong>
+                          ${notification.actor.name}</strong> liked your post`;
+                          link = `/user/posts/${notification.post.id}`;
+                          } else if (notification.type === 'comment') {
+                          message = `<strong>${notification.actor.name}</strong> commented on your post`;
+                          link = `/user/posts/${notification.post.id}`;
+                          } else if (notification.type === 'follow') {
+                          message = `<strong>${notification.actor.name}</strong> started following you`;
+                          link = `/user/profile/${notification.actor.id}`;
+                          } else if (notification.type === 'follow_request') {
+                          message = `<strong>${notification.actor.name}</strong> sent you a follow request`;
+                          link = `/user/search/follow-requests`;
+                          } else if (notification.type === 'follow_accept') {
+                          message = `<strong>${notification.actor.name}</strong> accepted your follow request`;
+                          link = `/user/profile/${notification.actor.id}`;
+                          } else if (notification.type === 'follow_reject') {
+                          message = `<strong>${notification.actor.name}</strong> declined your follow request`;
+                          link = `/user/profile/${notification.actor.id}`;
+                          } else if (notification.type === 'group_add') {
+                          const gName = (notification.meta && notification.meta.groupName) || 'a group';
+                          const chatId = notification.meta && notification.meta.chatId;
+                          message = `<strong>${notification.actor.name}</strong> added you to the group
+                          <strong>${gName}</strong>`;
+                          link = chatId ? `/user/chats` : `/user/chats`;
+                          } else if (notification.type === 'group_remove') {
+                          const gName = (notification.meta && notification.meta.groupName) || 'a group';
+                          message = `<strong>${notification.actor.name}</strong> removed you from the group
+                          <strong>${gName}</strong>`;
+                          link = `/user/chats`;
+                          }
+                          %>
+
+                          <a href="<%= link %>" class="text-dark d-block" onclick="markAsRead(<%= notification.id %>)">
+                            <p class="mb-1"><%- message %></p>
+
+                            <% if ((notification.type==='like' || notification.type==='comment' ) && notification.post)
+                              { %>
+                              <p class="text-muted mb-1 small">
+                                <i class="ri-article-line me-1"></i>
+                                "<%= notification.post.content.substring(0, 60) %>
+                                  <%= notification.post.content.length> 60 ? '...' : '' %>"
+                              </p>
+                              <% } %>
+
+                                <% if (notification.type==='comment' && notification.comment) { %>
+                                  <div class="bg-light rounded p-2 mt-2 small">
+                                    <%= notification.comment.comment.substring(0, 100) %>
+                                      <%= notification.comment.comment.length> 100 ? '...' : '' %>
+                                  </div>
+                                  <% } %>
+                          </a>
+
+                          <small class="text-muted">
+                            <i class="ri-time-line me-1"></i>
+                            <%= new Date(notification.createdAt).toLocaleString('en-US', { month: 'short' ,
+                              day: 'numeric' , hour: '2-digit' , minute: '2-digit' }) %>
+                          </small>
+                      </div>
+
+                      <div class="dropdown">
+                        <button class="btn btn-sm btn-ghost-secondary" type="button" data-bs-toggle="dropdown">
+                          <i class="ri-more-2-fill"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                          <% if (!notification.isRead) { %>
+                            <li>
+                              <a class="dropdown-item" href="javascript:void(0);"
+                                onclick="markAsRead(<%= notification.id %>);">
+                                <i class="ri-check-line me-2"></i>Mark as Read
+                              </a>
+                            </li>
+                            <% } %>
+                              <li>
+                                <a class="dropdown-item text-danger" href="javascript:void(0);" data-bs-toggle="modal"
+                                  data-bs-target="#deleteConfirmationModal"
+                                  onclick="prepareDelete('single', <%= notification.id %>)">
+                                  <i class="ri-delete-bin-line me-2"></i>Delete
+                                </a>
+                              </li>
+                        </ul>
+                      </div>
+
+                    </div>
+                  </div>
+                  <% }) %>
+              </div>
+
+              <% if (totalPages> 1) { %>
+                <div class="p-3 border-top">
+                  <nav aria-label="Notifications pagination">
+                    <ul class="pagination justify-content-center mb-0">
+
+                      <% const filterParam=filter && filter !=='all' ? `&filter=${filter}` : '' ; %>
+
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                          <a class="page-link" href="?page=<%= currentPage - 1 %><%= filterParam %>">
+                            <i class="ri-arrow-left-s-line"></i>
+                          </a>
+                        </li>
+
+                        <% const startPage=Math.max(1, currentPage - 2); const endPage=Math.min(totalPages, currentPage
+                          + 2); %>
+
+                          <% if (startPage> 1) { %>
+                            <li class="page-item">
+                              <a class="page-link" href="?page=1<%= filterParam %>">1</a>
+                            </li>
+                            <% if (startPage> 2) { %>
+                              <li class="page-item disabled"><span class="page-link">...</span></li>
+                              <% } %>
+                                <% } %>
+
+                                  <% for (let i=startPage; i <=endPage; i++) { %>
+                                    <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                      <a class="page-link" href="?page=<%= i %><%= filterParam %>">
+                                        <%= i %>
+                                      </a>
+                                    </li>
+                                    <% } %>
+
+                                      <% if (endPage < totalPages) { %>
+                                        <% if (endPage < totalPages - 1) { %>
+                                          <li class="page-item disabled"><span class="page-link">...</span></li>
+                                          <% } %>
+                                            <li class="page-item">
+                                              <a class="page-link" href="?page=<%= totalPages %><%= filterParam %>">
+                                                <%= totalPages %>
+                                              </a>
+                                            </li>
+                                            <% } %>
+
+                                              <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                                <a class="page-link"
+                                                  href="?page=<%= currentPage + 1 %><%= filterParam %>">
+                                                  <i class="ri-arrow-right-s-line"></i>
+                                                </a>
+                                              </li>
+
+                    </ul>
+                  </nav>
+                </div>
+                <% } %>
+
+                  <% } else { %>
+                    <div class="text-center py-5">
+                      <lord-icon src="https://cdn.lordicon.com/zxvuvcnc.json" trigger="loop"
+                        colors="primary:#405189,secondary:#0ab39c" style="width:100px;height:100px"></lord-icon>
+                      <h5 class="mt-3">No Notifications</h5>
+                      <p class="text-muted">You're all caught up! We'll notify you when something new happens.</p>
+                    </div>
+                    <% } %>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="modal fade zoomIn" id="deleteConfirmationModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+              id="deleteConfirmationModal-close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="delete-form" method="POST">
+              <div class="mt-2 text-center">
+                <lord-icon src="https://cdn.lordicon.com/gsqxdxog.json" trigger="loop"
+                  colors="primary:#f7b84b,secondary:#f06548" style="width: 100px; height: 100px"></lord-icon>
+                <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+                  <h4>Are you sure?</h4>
+                  <p class="text-muted mx-4 mb-0" id="delete-modal-text">
+                    Are you sure you want to perform this action?
+                  </p>
+                  <input type="hidden" id="modal-action-type" />
+                  <input type="hidden" id="modal-notification-id" />
+                </div>
+              </div>
+              <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+                <button type="button" class="btn w-sm btn-light" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn w-sm btn-danger" id="delete-confirmation">Yes, Delete It!</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- contentFor('FooterJs') %>
+      <script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+      <script>
+        // ─── MARK AS READ ────────────────────────────────────────────────────────────
+        async function markAsRead(notificationId) {
+          try {
+            const response = await fetch(`/user/notifications/${notificationId}/read`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (response.ok) {
+              const notifElement = document.getElementById(`notif-${notificationId}`);
+              if (notifElement) {
+                notifElement.classList.remove('unread');
+              }
+              updateUnreadCount();
+            }
+          } catch (error) {
+            console.error('Mark as read error:', error);
+          }
+        }
+
+        // ─── MARK ALL AS READ ────────────────────────────────────────────────────────
+        async function markAllAsRead() {
+          try {
+            const response = await fetch('/user/notifications/mark-all-read', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (response.ok) {
+              location.reload();
+            }
+          } catch (error) {
+            console.error('Mark all as read error:', error);
+          }
+        }
+
+        // ─── MODAL PREPARATION & SUBMISSION LOGIC ────────────────────────────────────
+        function prepareDelete(actionType, notificationId = null) {
+          document.getElementById('modal-action-type').value = actionType;
+          document.getElementById('modal-notification-id').value = notificationId || '';
+
+          const modalText = document.getElementById('delete-modal-text');
+          const confirmBtn = document.getElementById('delete-confirmation');
+
+          if (actionType === 'single') {
+            modalText.innerText = "Are you sure you want to delete this notification?";
+            confirmBtn.innerText = "Yes, Delete";
+          } else if (actionType === 'bulk') {
+            modalText.innerText = "Are you sure you want to delete all read notifications? This action cannot be undone.";
+            confirmBtn.innerText = "Yes, Delete All";
+          }
+        }
+
+        document.getElementById('delete-form').addEventListener('submit', async function (e) {
+          e.preventDefault();
+
+          const actionType = document.getElementById('modal-action-type').value;
+          const notificationId = document.getElementById('modal-notification-id').value;
+          const submitBtn = document.getElementById('delete-confirmation');
+          const originalText = submitBtn.innerText;
+
+          try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing...';
+
+            if (actionType === 'single') {
+              const response = await fetch(`/user/notifications/${notificationId}`, { method: 'DELETE' });
+
+              if (response.ok) {
+                const notifElement = document.getElementById(`notif-${notificationId}`);
+                if (notifElement) {
+                  notifElement.remove();
+
+                  const list = document.getElementById('notificationsList');
+                  if (list && list.children.length === 0) {
+                    location.reload();
+                  }
+                }
+                updateUnreadCount();
+                closeModal();
+              } else {
+                throw new Error('Failed to delete notification');
+              }
+
+            } else if (actionType === 'bulk') {
+              const response = await fetch('/user/notifications/delete-all-read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+              });
+
+              if (response.ok) {
+                location.reload();
+              } else {
+                throw new Error('Failed to delete notifications');
+              }
+            }
+          } catch (error) {
+            console.error('Action error:', error);
+            Swal.fire('Error', error.message || 'An unexpected error occurred', 'error');
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalText;
+          }
+        });
+
+        function closeModal() {
+          document.getElementById('deleteConfirmationModal-close').click();
+        }
+
+        // ─── UPDATE UNREAD COUNT ─────────────────────────────────────────────────────
+        async function updateUnreadCount() {
+          try {
+            const response = await fetch('/user/notifications/unread-count');
+            if (response.ok) {
+              const data = await response.json();
+              const badge = document.querySelector('.notification-badge');
+              if (badge) {
+                if (data.count > 0) {
+                  badge.textContent = data.count;
+                  badge.style.display = 'inline-block';
+                } else {
+                  badge.style.display = 'none';
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Update unread count error:', error);
+          }
+        }
+      </script>

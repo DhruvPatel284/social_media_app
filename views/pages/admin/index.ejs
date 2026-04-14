@@ -1,0 +1,207 @@
+<%- contentFor('HeaderCss') %>
+
+<%- contentFor('body') %>
+
+<!-- <div class="row">
+  <div class="col-12">
+    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+      <h4 class="mb-sm-0">Dashboard</h4>
+      <div class="page-title-right">
+        <ol class="breadcrumb m-0">
+          <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+          <li class="breadcrumb-item active">Home</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div> -->
+
+<!-- Analytics Cards -->
+<div class="row">
+  <!-- Total Users -->
+  <div class="col-xl-3 col-md-6">
+    <div class="card card-animate">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <p class="fw-medium text-muted mb-0">Total Users</p>
+            <h2 class="mt-4 ff-secondary fw-semibold">
+              <span class="counter-value" data-target="<%= analytics.totalUsers %>">0</span>
+            </h2>
+            <p class="mb-0 text-muted">
+              <span class="text-success">
+                <i class="ri-user-line align-middle"></i> Registered users
+              </span>
+            </p>
+          </div>
+          <div>
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-info-subtle rounded-circle fs-2">
+                <i class="ri-user-line text-info"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Posts -->
+  <div class="col-xl-3 col-md-6">
+    <div class="card card-animate">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <p class="fw-medium text-muted mb-0">Total Posts</p>
+            <h2 class="mt-4 ff-secondary fw-semibold">
+              <span class="counter-value" data-target="<%= analytics.totalPosts %>">0</span>
+            </h2>
+            <p class="mb-0 text-muted">
+              <span class="text-primary">
+                <i class="ri-article-line align-middle"></i> All posts
+              </span>
+            </p>
+          </div>
+          <div>
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-primary-subtle rounded-circle fs-2">
+                <i class="ri-article-line text-primary"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reviewed Posts -->
+  <div class="col-xl-3 col-md-6">
+    <div class="card card-animate">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <p class="fw-medium text-muted mb-0">Reviewed Posts</p>
+            <h2 class="mt-4 ff-secondary fw-semibold">
+              <span class="counter-value" data-target="<%= analytics.reviewedPosts %>">0</span>
+            </h2>
+            <p class="mb-0 text-muted">
+              <span class="text-success">
+                <i class="ri-shield-check-line align-middle"></i> Approved
+              </span>
+            </p>
+          </div>
+          <div>
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-success-subtle rounded-circle fs-2">
+                <i class="ri-shield-check-line text-success"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Posts -->
+  <div class="col-xl-3 col-md-6">
+    <div class="card card-animate">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <p class="fw-medium text-muted mb-0">Pending Review</p>
+            <h2 class="mt-4 ff-secondary fw-semibold">
+              <span class="counter-value" data-target="<%= analytics.unreviewedPosts %>">0</span>
+            </h2>
+            <p class="mb-0 text-muted">
+              <span class="text-danger">
+                <i class="ri-shield-cross-line align-middle"></i> Needs review
+              </span>
+            </p>
+          </div>
+          <div>
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-danger-subtle rounded-circle fs-2">
+                <i class="ri-shield-cross-line text-danger"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title mb-0">Quick Actions</h4>
+      </div>
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+          <a href="/admin/users" class="btn btn-info">
+            <i class="ri-user-line me-1"></i> Manage Users
+          </a>
+          <a href="/admin/posts" class="btn btn-primary">
+            <i class="ri-article-line me-1"></i> Manage Posts
+          </a>
+          <a href="/admin/users/create" class="btn btn-success">
+            <i class="ri-user-add-line me-1"></i> Add User
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header align-items-center d-flex">
+        <h4 class="card-title mb-0 flex-grow-1">Welcome to the Dashboard</h4>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">
+          Use the navigation menu on the left to manage users and posts. 
+          The analytics above give you a quick overview of your platform's activity.
+        </p>
+        <div class="alert alert-info mb-0" role="alert">
+          <strong>Tip:</strong> Posts marked as "Pending Review" need your attention. 
+          Review them in the <a href="/posts" class="alert-link">Posts section</a>.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('FooterJs') %>
+
+<!-- counter js -->
+<script src="/assets/libs/counter/counter.min.js"></script>
+
+<script>
+  // Initialize counters with animation
+  document.addEventListener('DOMContentLoaded', function() {
+    const counterElements = document.querySelectorAll('.counter-value');
+    
+    counterElements.forEach(function(element) {
+      const target = parseInt(element.getAttribute('data-target'));
+      let current = 0;
+      const increment = target / 50; // Animation duration control
+      
+      const updateCounter = function() {
+        current += increment;
+        if (current < target) {
+          element.textContent = Math.ceil(current);
+          setTimeout(updateCounter, 20);
+        } else {
+          element.textContent = target;
+        }
+      };
+      
+      updateCounter();
+    });
+  });
+</script>

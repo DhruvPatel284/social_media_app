@@ -1,0 +1,16 @@
+
+<label class="form-label"><%= locals.label || name.charAt(0).toUpperCase() + name.slice(1) %></label>
+
+<input
+  type="<%= locals.type || 'text' %>"
+  name="<%= name %>"
+  value="<%= oldInputs?.[name] || '' %>"
+  class="form-control<%= errors?.[name] ? ' is-invalid' : '' %>"
+  placeholder="<%= locals.placeholder || '' %>"
+  <%= locals.required ? 'required' : '' %>
+/>
+
+<% if (errors?.[name]) { %>
+<span class="error text-danger"><%= errors[name].join(', ') %></span>
+<% } %>
+

@@ -1,0 +1,285 @@
+<%- contentFor('HeaderCss') %>
+
+<!-- Sweet Alert css-->
+<link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+<style>
+  .profile-image-preview {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e9ebec;
+  }
+  .profile-image-container {
+    position: relative;
+    display: inline-block;
+  }
+  .profile-image-delete {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #f06548;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+  }
+  .profile-image-delete:hover {
+    background: #d63031;
+  }
+</style>
+
+<%- contentFor('body') %>
+<div class="">
+  <div class="row">
+    <!-- Flash Messages -->
+    <% const successFlash = typeof success !== 'undefined' ? success : null; %>
+    <% const errorFlash = typeof error !== 'undefined' ? error : null; %>
+    
+    <% if (successFlash) { %>
+    <div class="col-12">
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="ri-checkbox-circle-line me-1"></i> <%= successFlash %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    </div>
+    <% } %>
+    <% if (errorFlash) { %>
+    <div class="col-12">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="ri-error-warning-line me-1"></i> <%= errorFlash %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Profile Image Section -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="ri-user-line me-1"></i> Profile Image
+          </h5>
+        </div>
+        <div class="card-body text-center">
+          <% if (user.profile_image) { %>
+          <div class="profile-image-container mb-3">
+            <img
+              src="/uploads/users/<%= user.profile_image %>"
+              alt="Profile"
+              class="profile-image-preview"
+              id="current-profile-image"
+            />
+            <form
+              action="/admin/users/<%= user.id %>/profile-image?_method=DELETE"
+              method="POST"
+              style="display: inline"
+              onsubmit="return confirm('Delete profile image?')"
+            >
+              <input type="hidden" name="_method" value="DELETE" />
+              <button type="submit" class="profile-image-delete">
+                <i class="ri-delete-bin-line"></i>
+              </button>
+            </form>
+          </div>
+          <% } else { %>
+          <div class="mb-3" id="avatar-placeholder">
+            <% const initials = (user.name || '').trim().split(/\s+/).map(n => n.charAt(0)).join('').slice(0,2).toUpperCase(); %>
+            <div class="avatar-xl mx-auto">
+              <div class="avatar-title rounded-circle bg-primary-subtle text-primary fs-1">
+                <%= initials || 'U' %>
+              </div>
+            </div>
+          </div>
+          <% } %>
+
+          <!-- Image Preview for new upload -->
+          <div id="new-image-preview" class="mb-3" style="display: none;">
+            <img src="" alt="Preview" class="profile-image-preview" id="preview-img" />
+          </div>
+
+          <form
+            action="/admin/users/<%= user.id %>/profile-image"
+            method="POST"
+            enctype="multipart/form-data"
+            id="profile-image-form"
+          >
+            <div class="mb-3">
+              <input
+                type="file"
+                name="profile_image"
+                id="profile-image-input"
+                class="form-control"
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              />
+              <small class="text-muted">Max 2MB. JPEG, PNG, GIF, WebP only.</small>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="ri-upload-line me-1"></i>
+              <%= user.profile_image ? 'Change' : 'Upload' %> Image
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Details Form -->
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header align-items-center d-flex">
+          <h4 class="card-title mb-0 flex-grow-1">User Edit Form</h4>
+        </div>
+
+        <div class="card-body">
+          <div class="live-preview">
+            <form
+              action="/admin/users/<%- user.id %>/update?_method=put"
+              method="POST"
+              class="needs-validation"
+              id="edit-user-form"
+              novalidate
+              data-toast-text="Successfully Updated User!"
+            >
+              <div class="row">
+                <div class="">
+                  <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="name"
+                      value="<%- old ? old.name : user.name %>"
+                      placeholder="Enter your name"
+                      id="name"
+                      required
+                    />
+                    <% if (errors && errors.name) { %>
+                    <div class="text-danger"><%= errors.name[0] %></div>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+
+              <div class="">
+                <div class="mb-3">
+                  <label for="phoneNumber" class="form-label">Phone Number</label>
+                  <input
+                    type="tel"
+                    class="form-control"
+                    name="phoneNumber"
+                    value="<%- old ? old.phoneNumber : user.phoneNumber %>"
+                    placeholder="+(245) 451 45123"
+                    id="phoneNumber"
+                    required
+                  />
+                  <% if (errors && errors.phoneNumber) { %>
+                  <div class="text-danger"><%= errors.phoneNumber[0] %></div>
+                  <% } %>
+                </div>
+
+                <div class="">
+                  <div class="mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input
+                      type="email"
+                      class="form-control"
+                      name="email"
+                      value="<%- old ? old.email : user.email %>"
+                      placeholder="example@gmail.com"
+                      id="email"
+                      required
+                    />
+                    <% if (errors && errors.email) { %>
+                    <div class="text-danger"><%= errors.email[0] %></div>
+                    <% } %>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col">
+                    <button type="submit" class="btn btn-primary">
+                      Update
+                    </button>
+                    <a href="/admin/users/<%- user.id %>" class="btn btn-secondary">
+                      Cancel
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('FooterJs') %>
+
+<!-- Sweet Alerts js -->
+<script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<script src="/assets/libs/prismjs/prism.js"></script>
+
+<script>
+  // Validate profile image upload
+  const profileImageInput = document.getElementById('profile-image-input');
+  const previewContainer = document.getElementById('new-image-preview');
+  const previewImg = document.getElementById('preview-img');
+  
+  if (profileImageInput) {
+    profileImageInput.addEventListener('change', function() {
+      const file = this.files[0];
+      
+      if (!file) {
+        previewContainer.style.display = 'none';
+        return;
+      }
+      
+      // Validate file type
+      const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validImageTypes.includes(file.type)) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Invalid File Type',
+          text: `"${file.name}" is not a valid image file. Please upload JPEG, PNG, GIF, or WebP images only.`,
+          confirmButtonColor: '#3085d6',
+        });
+        this.value = '';
+        previewContainer.style.display = 'none';
+        return;
+      }
+      
+      // Validate file size (2MB)
+      const maxSize = 2 * 1024 * 1024; // 2 MB
+      if (file.size > maxSize) {
+        Swal.fire({
+          icon: 'error',
+          title: 'File Too Large',
+          text: `"${file.name}" exceeds the 2 MB size limit. Please choose a smaller image.`,
+          confirmButtonColor: '#3085d6',
+        });
+        this.value = '';
+        previewContainer.style.display = 'none';
+        return;
+      }
+      
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        previewImg.src = e.target.result;
+        previewContainer.style.display = 'block';
+        
+        // Hide current image or avatar if exists
+        const currentImage = document.getElementById('current-profile-image');
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+        if (currentImage) currentImage.style.display = 'none';
+        if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+</script>

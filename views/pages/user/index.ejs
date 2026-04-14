@@ -1,0 +1,580 @@
+<%- contentFor('HeaderCss') %>
+  <style>
+    .post-card {
+      transition: box-shadow 0.3s ease;
+    }
+
+    .post-card:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .post-media-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .post-media-item {
+      position: relative;
+      padding-top: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .post-media-item img,
+    .post-media-item video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 18px;
+    }
+  </style>
+
+  <%- contentFor('body') %>
+
+    <div class="row">
+      <div class="col-lg-8">
+
+        <!-- Create Post Card -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <% if (user.profile_image) { %>
+                <img src="/uploads/users/<%= user.profile_image %>" class="rounded-circle" width="48" height="48"
+                  alt="Your avatar">
+                <% } else { %>
+                  <div class="avatar-circle bg-primary-subtle text-primary">
+                    <%= user.name.charAt(0).toUpperCase() %>
+                  </div>
+                  <% } %>
+                    <a href="/user/posts/create" class="form-control ms-3"
+                      style="cursor: pointer; background: #f8f9fa;">
+                      What's on your mind, <%= user.name.split(' ')[0] %>?
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feed Posts -->
+    <% if (posts && posts.length > 0) { %>
+      <% posts.forEach(function(post) { %>
+        <div class="card post-card mb-3">
+          <div class="card-body">
+            
+            <!-- Post Header -->
+            <div class="d-flex align-items-center mb-3">
+              <% if (post.user.profile_image) { %>
+                <img src="/uploads/users/<%= post.user.profile_image %>" class="rounded-circle" width="48" height="48" alt="<%= post.user.name %>">
+              <% } else { %>
+                <div class="avatar-circle bg-info-subtle text-info">
+                  <%= post.user.name.charAt(0).toUpperCase() %>
+                </div>
+              <% } %>
+              <div class="ms-3 flex-grow-1">
+                <a href="/user/profile/<%= post.user.id %>" class="fw-semibold text-dark d-block"><%= post.user.name %></a>
+                <small class="text-muted"><%= new Date(post.createdAt).toLocaleString() %></small>
+              </div>
+              <% if (post.user.id === user.id) { %>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-ghost-secondary" type="button" data-bs-toggle="dropdown">
+                    <i class="ri-more-2-fill"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="/user/posts/<%= post.id %>/edit"><i class="ri-pencil-line me-2"></i>Edit</a></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="deletePost(<%= post.id %>)"><i class="ri-delete-bin-line me-2"></i>Delete</a></li>
+                  </ul>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Post Content -->
+            <p class="mb-3"><%= post.content %></p>
+
+            <!-- Post Media -->
+            <% if (post.media && post.media.length > 0) { %>
+              <div class="post-media-grid">
+                <% post.media.forEach(function(media) { %>
+                  <div class="post-media-item">
+                    <% if (media.type === 'image') { %>
+                        <img src="/uploads/posts/<%= media.filename %>" alt="Post image">
+                        <% } else if (media.type==='video' ) { %>
+                          <video controls>
+                            <source src="/uploads/posts/<%= media.filename %>" type="video/mp4">
+                          </video>
+                          <% } %>
+            </div>
+            <% }) %>
+          </div>
+          <% } %>
+
+            <!-- Post Actions -->
+            <div class="border-top pt-3 mt-3">
+              <div class="d-flex justify-content-between">
+                <button class="btn btn-sm btn-ghost-primary like-btn" data-post-id="<%= post.id %>"
+                  data-liked="<%= post.isLikedByCurrentUser %>">
+                  <i class="<%= post.isLikedByCurrentUser ? 'ri-heart-fill text-danger' : 'ri-heart-line' %>"></i>
+                  <span class="like-count">
+                    <%= post.likeCount %>
+                  </span> Likes
+                </button>
+                <button class="btn btn-sm btn-ghost-secondary" onclick="toggleComments(<%= post.id %>)">
+                  <i class="ri-chat-3-line"></i>
+                  <span class="comment-count-<%= post.id %>">
+                    <%= post.commentCount %>
+                  </span> Comments
+                </button>
+                <button class="btn btn-sm btn-ghost-secondary">
+                  <i class="ri-share-line"></i> Share
+                </button>
+              </div>
+            </div>
+
+            <!-- Comments Section (Hidden by default) -->
+            <div id="comments-<%= post.id %>" class="mt-3" style="display: none;">
+              <div class="border-top pt-3">
+                <!-- Comment Input -->
+                <div class="d-flex mb-3">
+                  <% if (user.profile_image) { %>
+                    <img src="/uploads/users/<%= user.profile_image %>" class="rounded-circle" width="32" height="32"
+                      alt="You">
+                    <% } else { %>
+                      <div class="avatar-circle bg-primary-subtle text-primary"
+                        style="width: 32px; height: 32px; font-size: 14px;">
+                        <%= user.name.charAt(0).toUpperCase() %>
+                      </div>
+                      <% } %>
+                        <input type="text" class="form-control form-control-sm ms-2" placeholder="Write a comment..."
+                          onkeypress="handleCommentSubmit(event, <%= post.id %>)">
+                </div>
+
+                <!-- Comments List -->
+                <div id="comments-list-<%= post.id %>">
+                  <% if (post.comments && post.comments.length> 0) { %>
+                    <% post.comments.slice(0, 3).forEach(function(comment) { %>
+                      <div class="d-flex mb-2">
+                        <% if (comment.user.profile_image) { %>
+                          <img src="/uploads/users/<%= comment.user.profile_image %>" class="rounded-circle" width="32"
+                            height="32" alt="<%= comment.user.name %>">
+                          <% } else { %>
+                            <div class="avatar-circle bg-secondary-subtle text-secondary"
+                              style="width: 32px; height: 32px; font-size: 14px;">
+                              <%= comment.user.name.charAt(0).toUpperCase() %>
+                            </div>
+                            <% } %>
+                              <div class="ms-2 bg-light rounded p-2 flex-grow-1">
+                                <strong class="d-block" style="font-size: 13px;">
+                                  <%= comment.user.name %>
+                                </strong>
+                                <p class="mb-0" style="font-size: 13px;">
+                                  <%= comment.comment %>
+                                </p>
+                              </div>
+                      </div>
+                      <% }) %>
+                        <% } %>
+                </div>
+
+              </div>
+            </div>
+
+        </div>
+      </div>
+      <% }) %>
+        <% } else { %>
+          <!-- Empty State -->
+          <div class="card">
+            <div class="card-body text-center py-5">
+              <lord-icon src="https://cdn.lordicon.com/nocovwne.json" trigger="loop"
+                colors="primary:#405189,secondary:#0ab39c" style="width:120px;height:120px"></lord-icon>
+              <h5 class="mt-4">No posts yet</h5>
+              <p class="text-muted">Follow users to see their posts in your feed, or create your first post!</p>
+              <a href="/user/posts/create" class="btn btn-primary mt-3">
+                <i class="ri-add-line me-1"></i> Create Post
+              </a>
+            </div>
+          </div>
+          <% } %>
+
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="col-lg-4">
+
+      <!-- User Stats Card -->
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="text-center mb-3">
+            <% if (user.profile_image) { %>
+              <img src="/uploads/users/<%= user.profile_image %>" class="rounded-circle mb-2" width="80" height="80"
+                alt="<%= user.name %>">
+              <% } else { %>
+                <div class="avatar-circle bg-primary-subtle text-primary mx-auto mb-2"
+                  style="width: 80px; height: 80px; font-size: 32px;">
+                  <%= user.name.charAt(0).toUpperCase() %>
+                </div>
+                <% } %>
+                  <h5 class="mb-1">
+                    <%= user.name %>
+                  </h5>
+                  <p class="text-muted mb-0">
+                    <%= user.email %>
+                  </p>
+          </div>
+
+          <div class="row text-center">
+            <div class="col-4">
+              <h4 class="mb-0">
+                <%= stats.postsCount %>
+              </h4>
+              <small class="text-muted">Posts</small>
+            </div>
+            <div class="col-4">
+              <h4 class="mb-0">
+                <%= stats.followersCount %>
+              </h4>
+              <small class="text-muted">Followers</small>
+            </div>
+            <div class="col-4">
+              <h4 class="mb-0">
+                <%= stats.followingCount %>
+              </h4>
+              <small class="text-muted">Following</small>
+            </div>
+          </div>
+
+          <a href="/user/profile" class="btn btn-primary w-100 mt-3">
+            <i class="ri-user-line me-1"></i> View Profile
+          </a>
+        </div>
+      </div>
+
+      <!-- Suggestions Card -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0">Suggestions for you</h6>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-0" style="font-size: 14px;">
+            <a href="/user/search" class="text-primary">Search for users</a> to follow and see their posts in your feed.
+          </p>
+        </div>
+      </div>
+
+    </div>
+    </div>
+
+    <%- contentFor('FooterJs') %>
+      <script>
+        let currentPage = 1;
+        let isLoading = false;
+        let hasMore = true;
+        const loadedComments = new Set(); // Tracks post IDs whose comments have already been loaded
+
+        // ─── INFINITE SCROLL ─────────────────────────────────────────────────────────
+        window.addEventListener('scroll', function () {
+          if (isLoading || !hasMore) return;
+
+          const scrollPosition = window.innerHeight + window.scrollY;
+          const pageHeight = document.documentElement.scrollHeight;
+
+          // Load more when 200px from bottom
+          if (scrollPosition >= pageHeight - 200) {
+            loadMorePosts();
+          }
+        });
+
+        async function loadMorePosts() {
+          if (isLoading || !hasMore) return;
+
+          isLoading = true;
+          currentPage++;
+
+          // Show loading indicator
+          const feedContainer = document.querySelector('.col-lg-8');
+          const loader = document.createElement('div');
+          loader.className = 'text-center my-4';
+          loader.id = 'loading-indicator';
+          loader.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+          feedContainer.appendChild(loader);
+
+          try {
+            const response = await fetch(`/user/posts/feed?page=${currentPage}&limit=10`);
+            const data = await response.json();
+
+            if (data.success && data.posts.length > 0) {
+              // Append new posts
+              data.posts.forEach(post => {
+                feedContainer.insertBefore(createPostCard(post), loader);
+              });
+
+              hasMore = data.pagination.hasMore;
+            } else {
+              hasMore = false;
+            }
+          } catch (error) {
+            console.error('Load more error:', error);
+          } finally {
+            loader.remove();
+            isLoading = false;
+          }
+        }
+
+        // ─── CREATE POST CARD DYNAMICALLY ────────────────────────────────────────────
+        function createPostCard(post) {
+          const card = document.createElement('div');
+          card.className = 'card post-card mb-3';
+          card.innerHTML = `
+    <div class="card-body">
+      <div class="d-flex align-items-center mb-3">
+        ${post.user.profile_image
+              ? `<img src="/uploads/users/${post.user.profile_image}" class="rounded-circle" width="48" height="48" alt="${post.user.name}">`
+              : `<div class="avatar-circle bg-info-subtle text-info">${post.user.name.charAt(0).toUpperCase()}</div>`
+            }
+        <div class="ms-3 flex-grow-1">
+          <a href="/user/profile/${post.user.id}" class="fw-semibold text-dark d-block">${post.user.name}</a>
+          <small class="text-muted">${new Date(post.createdAt).toLocaleString()}</small>
+        </div>
+        ${post.user.id === '<%= user.id %>' ? `
+          <div class="dropdown">
+            <button class="btn btn-sm btn-ghost-secondary" type="button" data-bs-toggle="dropdown">
+              <i class="ri-more-2-fill"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/user/posts/${post.id}/edit"><i class="ri-pencil-line me-2"></i>Edit</a></li>
+              <li><a class="dropdown-item text-danger" href="#" onclick="deletePost(${post.id})"><i class="ri-delete-bin-line me-2"></i>Delete</a></li>
+            </ul>
+          </div>
+        ` : ''}
+      </div>
+
+      <p class="mb-3">${post.content}</p>
+
+      ${post.media && post.media.length > 0 ? `
+        <div class="post-media-grid">
+          ${post.media.map(media => `
+            <div class="post-media-item">
+              ${media.type === 'image'
+                ? `<img src="/uploads/posts/${media.filename}" alt="Post image">`
+                : `<video controls><source src="/uploads/posts/${media.filename}" type="video/mp4"></video>`
+              }
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      <div class="border-top pt-3 mt-3">
+        <div class="d-flex justify-content-between">
+          <button class="btn btn-sm btn-ghost-primary like-btn" data-post-id="${post.id}" data-liked="${post.isLikedByCurrentUser}">
+            <i class="${post.isLikedByCurrentUser ? 'ri-heart-fill text-danger' : 'ri-heart-line'}"></i>
+            <span class="like-count">${post.likeCount}</span> Likes
+          </button>
+          <button class="btn btn-sm btn-ghost-secondary" onclick="toggleComments(${post.id})">
+            <i class="ri-chat-3-line"></i> <span class="comment-count-${post.id}">${post.commentCount}</span> Comments
+          </button>
+          <button class="btn btn-sm btn-ghost-secondary">
+            <i class="ri-share-line"></i> Share
+          </button>
+        </div>
+      </div>
+
+      <div id="comments-${post.id}" class="mt-3" style="display: none;">
+        <div class="border-top pt-3">
+          <div class="d-flex mb-3">
+            <div class="avatar-circle bg-primary-subtle text-primary" style="width: 32px; height: 32px; font-size: 14px;"><%= user.name.charAt(0).toUpperCase() %></div>
+            <input type="text" class="form-control form-control-sm ms-2" placeholder="Write a comment..." onkeypress="handleCommentSubmit(event, ${post.id})">
+          </div>
+          <div id="comments-list-${post.id}">
+            ${post.comments && post.comments.length > 0
+              ? post.comments.slice(0, 3).map(c => `
+                <div class="d-flex mb-2">
+                  ${c.user.profile_image
+                  ? `<img src="/uploads/users/${c.user.profile_image}" class="rounded-circle" width="32" height="32" alt="${c.user.name}">`
+                  : `<div class="avatar-circle bg-secondary-subtle text-secondary" style="width: 32px; height: 32px; font-size: 14px;">${c.user.name.charAt(0).toUpperCase()}</div>`
+                }
+                  <div class="ms-2 bg-light rounded p-2 flex-grow-1">
+                    <strong class="d-block" style="font-size: 13px;">${c.user.name}</strong>
+                    <p class="mb-0" style="font-size: 13px;">${c.comment}</p>
+                  </div>
+                </div>`).join('')
+              : ''
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+          // Mark this post's comments as already loaded (pre-populated from feed data)
+          loadedComments.add(post.id);
+
+          // Attach like event listener
+          const likeBtn = card.querySelector('.like-btn');
+          likeBtn.addEventListener('click', function () {
+            handleLike(post.id, this);
+          });
+
+          return card;
+        }
+
+        // ─── TOGGLE COMMENTS ─────────────────────────────────────────────────────────
+        async function toggleComments(postId) {
+          const commentsDiv = document.getElementById('comments-' + postId);
+
+          if (commentsDiv.style.display === 'none') {
+            // Lazy-load comments from server on first open
+            if (!loadedComments.has(postId)) {
+              try {
+                const response = await fetch(`/user/posts/${postId}/comments`);
+                const data = await response.json();
+
+                if (data.success) {
+                  const commentsList = document.getElementById(`comments-list-${postId}`);
+                  commentsList.innerHTML = ''; // Clear any stale content
+
+                  if (data.comments.length > 0) {
+                    data.comments.slice(0, 3).forEach(comment => {
+                      const commentHTML = `
+                <div class="d-flex mb-2">
+                  ${comment.user.profile_image
+                          ? `<img src="/uploads/users/${comment.user.profile_image}" class="rounded-circle" width="32" height="32" alt="${comment.user.name}">`
+                          : `<div class="avatar-circle bg-secondary-subtle text-secondary" style="width: 32px; height: 32px; font-size: 14px;">${comment.user.name.charAt(0).toUpperCase()}</div>`
+                        }
+                  <div class="ms-2 bg-light rounded p-2 flex-grow-1">
+                    <strong class="d-block" style="font-size: 13px;">${comment.user.name}</strong>
+                    <p class="mb-0" style="font-size: 13px;">${comment.content}</p>
+                  </div>
+                </div>`;
+                      commentsList.insertAdjacentHTML('beforeend', commentHTML);
+                    });
+                  }
+
+                  loadedComments.add(postId);
+                }
+              } catch (error) {
+                console.error('Failed to load comments:', error);
+              }
+            }
+
+            commentsDiv.style.display = 'block';
+          } else {
+            commentsDiv.style.display = 'none';
+          }
+        }
+
+        // ─── HANDLE LIKE ─────────────────────────────────────────────────────────────
+        async function handleLike(postId, button) {
+          try {
+            const response = await fetch(`/user/posts/${postId}/like`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+
+              const icon = button.querySelector('i');
+              const countSpan = button.querySelector('.like-count');
+
+              if (data.isLiked) {
+                icon.className = 'ri-heart-fill text-danger';
+                button.dataset.liked = 'true';
+              } else {
+                icon.className = 'ri-heart-line';
+                button.dataset.liked = 'false';
+              }
+
+              countSpan.textContent = data.likeCount;
+            }
+          } catch (error) {
+            console.error('Like error:', error);
+          }
+        }
+
+        // Attach like handlers to initial posts
+        document.querySelectorAll('.like-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            const postId = this.dataset.postId;
+            handleLike(postId, this);
+          });
+        });
+
+        // ─── HANDLE COMMENT SUBMIT ───────────────────────────────────────────────────
+        async function handleCommentSubmit(event, postId) {
+          if (event.key === 'Enter' && event.target.value.trim()) {
+            const content = event.target.value.trim();
+            const input = event.target;
+
+            try {
+              const response = await fetch(`/user/posts/${postId}/comment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content }),
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+
+                if (data.success) {
+                  // Clear input
+                  input.value = '';
+
+                  // Add comment to list
+                  const commentsList = document.getElementById(`comments-list-${postId}`);
+                  const commentHTML = `
+            <div class="d-flex mb-2">
+              ${data.comment.user.profile_image
+                      ? `<img src="/uploads/users/${data.comment.user.profile_image}" class="rounded-circle" width="32" height="32" alt="${data.comment.user.name}">`
+                      : `<div class="avatar-circle bg-secondary-subtle text-secondary" style="width: 32px; height: 32px; font-size: 14px;">${data.comment.user.name.charAt(0).toUpperCase()}</div>`
+                    }
+              <div class="ms-2 bg-light rounded p-2 flex-grow-1">
+                <strong class="d-block" style="font-size: 13px;">${data.comment.user.name}</strong>
+                <p class="mb-0" style="font-size: 13px;">${data.comment.content}</p>
+              </div>
+            </div>
+          `;
+                  commentsList.insertAdjacentHTML('beforeend', commentHTML);
+
+                  // Update comment count
+                  const countSpan = document.querySelector(`.comment-count-${postId}`);
+                  if (countSpan) {
+                    countSpan.textContent = parseInt(countSpan.textContent) + 1;
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Comment error:', error);
+            }
+          }
+        }
+
+        // ─── DELETE POST ─────────────────────────────────────────────────────────────
+        async function deletePost(postId) {
+          if (confirm('Are you sure you want to delete this post?')) {
+            try {
+              const response = await fetch(`/user/posts/${postId}`, {
+                method: 'DELETE',
+              });
+
+              if (response.ok) {
+                location.reload();
+              }
+            } catch (error) {
+              console.error('Delete error:', error);
+            }
+          }
+        }
+      </script>

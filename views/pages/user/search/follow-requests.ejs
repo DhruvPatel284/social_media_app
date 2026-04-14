@@ -1,0 +1,358 @@
+<%- contentFor('HeaderCss') %>
+<link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+<style>
+  .request-card {
+    transition: all 0.3s ease;
+  }
+  .request-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  .user-avatar-request {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .avatar-circle-request {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 20px;
+  }
+</style>
+
+<%- contentFor('body') %>
+
+<div class="row">
+  <div class="col-12">
+    
+    <ul class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#received" role="tab">
+          <i class="ri-inbox-line me-1"></i> Received
+          <% if (pendingRequests.length > 0) { %>
+            <span class="badge bg-danger ms-1"><%= pendingRequests.length %></span>
+          <% } %>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#sent" role="tab">
+          <i class="ri-send-plane-line me-1"></i> Sent
+          <% if (sentRequests.length > 0) { %>
+            <span class="badge bg-secondary ms-1"><%= sentRequests.length %></span>
+          <% } %>
+        </a>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      
+      <div class="tab-pane active" id="received" role="tabpanel">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Follow Requests</h5>
+          </div>
+          <div class="card-body">
+            <% if (pendingRequests && pendingRequests.length > 0) { %>
+              <div class="row">
+                <% pendingRequests.forEach(function(request) { %>
+                  <div class="col-lg-6 mb-3">
+                    <div class="card request-card h-100" id="request-<%= request.id %>">
+                      <div class="card-body">
+                        <div class="d-flex align-items-center">
+                          
+                          <a href="/user/profile/<%= request.user.id %>">
+                            <% if (request.user.profile_image) { %>
+                              <img src="/uploads/users/<%= request.user.profile_image %>" class="user-avatar-request me-3" alt="<%= request.user.name %>">
+                            <% } else { %>
+                              <div class="avatar-circle-request bg-primary-subtle text-primary me-3">
+                                <%= request.user.name.charAt(0).toUpperCase() %>
+                              </div>
+                            <% } %>
+                          </a>
+
+                          <div class="flex-grow-1">
+                            <h6 class="mb-1">
+                              <a href="/user/profile/<%= request.user.id %>" class="text-dark">
+                                <%= request.user.name %>
+                              </a>
+                            </h6>
+                            <p class="text-muted mb-1 small"><%= request.user.email %></p>
+                            <small class="text-muted">
+                              <i class="ri-time-line me-1"></i>
+                              <%= new Date(request.createdAt).toLocaleString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              }) %>
+                            </small>
+                          </div>
+
+                          <div class="d-flex flex-column gap-2">
+                            <button 
+                              class="btn btn-success btn-sm"
+                              onclick="acceptRequest(<%= request.id %>)"
+                            >
+                              <i class="ri-check-line me-1"></i> Accept
+                            </button>
+                            <button 
+                              class="btn btn-soft-danger btn-sm"
+                              data-bs-toggle="modal" 
+                              data-bs-target="#deleteConfirmationModal"
+                              onclick="prepareDelete('reject', <%= request.id %>, null)"
+                            >
+                              <i class="ri-close-line me-1"></i> Reject
+                            </button>
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <div class="text-center py-5">
+                <lord-icon src="https://cdn.lordicon.com/nocovwne.json" trigger="loop" colors="primary:#405189" style="width:100px;height:100px"></lord-icon>
+                <h5 class="mt-3">No Pending Requests</h5>
+                <p class="text-muted">You don't have any pending follow requests.</p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="sent" role="tabpanel">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Sent Requests</h5>
+          </div>
+          <div class="card-body">
+            <% if (sentRequests && sentRequests.length > 0) { %>
+              <div class="row">
+                <% sentRequests.forEach(function(request) { %>
+                  <div class="col-lg-6 mb-3">
+                    <div class="card request-card h-100" id="sent-<%= request.id %>">
+                      <div class="card-body">
+                        <div class="d-flex align-items-center">
+                          
+                          <a href="/user/profile/<%= request.user.id %>">
+                            <% if (request.user.profile_image) { %>
+                              <img src="/uploads/users/<%= request.user.profile_image %>" class="user-avatar-request me-3" alt="<%= request.user.name %>">
+                            <% } else { %>
+                              <div class="avatar-circle-request bg-info-subtle text-info me-3">
+                                <%= request.user.name.charAt(0).toUpperCase() %>
+                              </div>
+                            <% } %>
+                          </a>
+
+                          <div class="flex-grow-1">
+                            <h6 class="mb-1">
+                              <a href="/user/profile/<%= request.user.id %>" class="text-dark">
+                                <%= request.user.name %>
+                              </a>
+                            </h6>
+                            <p class="text-muted mb-1 small"><%= request.user.email %></p>
+                            <small class="text-muted">
+                              <i class="ri-time-line me-1"></i>
+                              <%= new Date(request.createdAt).toLocaleString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              }) %>
+                            </small>
+                          </div>
+
+                          <div>
+                            <button 
+                              class="btn btn-soft-danger btn-sm"
+                              data-bs-toggle="modal" 
+                              data-bs-target="#deleteConfirmationModal"
+                              onclick="prepareDelete('cancel', <%= request.id %>, '<%= request.user.id %>')"
+                            >
+                              <i class="ri-close-line me-1"></i> Cancel
+                            </button>
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <div class="text-center py-5">
+                <lord-icon src="https://cdn.lordicon.com/nocovwne.json" trigger="loop" colors="primary:#405189" style="width:100px;height:100px"></lord-icon>
+                <h5 class="mt-3">No Sent Requests</h5>
+                <p class="text-muted">You haven't sent any follow requests.</p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<div class="modal fade zoomIn" id="deleteConfirmationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="deleteConfirmationModal-close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="delete-form" method="POST">
+          <div class="mt-2 text-center">
+            <lord-icon
+              src="https://cdn.lordicon.com/gsqxdxog.json"
+              trigger="loop"
+              colors="primary:#f7b84b,secondary:#f06548"
+              style="width: 100px; height: 100px"
+            ></lord-icon>
+            <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+              <h4>Are you sure?</h4>
+              <p class="text-muted mx-4 mb-0" id="delete-modal-text">
+                Are you sure you want to perform this action?
+              </p>
+              <input type="hidden" id="modal-action-type" />
+              <input type="hidden" id="modal-request-id" />
+              <input type="hidden" id="modal-target-user-id" />
+            </div>
+          </div>
+          <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+            <button type="button" class="btn w-sm btn-light" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn w-sm btn-danger" id="delete-confirmation">Yes, Proceed</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('FooterJs') %>
+<script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<script>
+// ─── ACCEPT REQUEST (No modal needed) ────────────────────────────────────────
+async function acceptRequest(requestId) {
+  try {
+    const response = await fetch(`/user/search/follow-request/${requestId}/accept`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (response.ok) {
+      const card = document.getElementById(`request-${requestId}`);
+      card.remove();
+
+      // Check if list is empty
+      const container = document.querySelector('#received .row');
+      if (container && container.children.length === 0) {
+        location.reload();
+      }
+    } else {
+      const data = await response.json();
+      Swal.fire('Error', data.error || 'Failed to accept request', 'error');
+    }
+  } catch (error) {
+    console.error('Accept error:', error);
+    Swal.fire('Error', 'Failed to accept request', 'error');
+  }
+}
+
+// ─── MODAL PREPARATION & SUBMISSION LOGIC ────────────────────────────────────
+
+// Set up the modal data before it opens
+function prepareDelete(actionType, requestId, targetUserId) {
+  document.getElementById('modal-action-type').value = actionType;
+  document.getElementById('modal-request-id').value = requestId;
+  document.getElementById('modal-target-user-id').value = targetUserId || '';
+
+  const modalText = document.getElementById('delete-modal-text');
+  const confirmBtn = document.getElementById('delete-confirmation');
+
+  if (actionType === 'reject') {
+    modalText.innerText = "Are you sure you want to reject this follow request?";
+    confirmBtn.innerText = "Yes, Reject";
+  } else if (actionType === 'cancel') {
+    modalText.innerText = "Are you sure you want to cancel this sent follow request?";
+    confirmBtn.innerText = "Yes, Cancel Request";
+  }
+}
+
+// Handle form submission from inside the modal
+document.getElementById('delete-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const actionType = document.getElementById('modal-action-type').value;
+  const requestId = document.getElementById('modal-request-id').value;
+  const targetUserId = document.getElementById('modal-target-user-id').value;
+  
+  const submitBtn = document.getElementById('delete-confirmation');
+  const originalText = submitBtn.innerText;
+
+  try {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing...';
+
+    if (actionType === 'reject') {
+      // Logic for Rejecting a received request
+      const response = await fetch(`/user/search/follow-request/${requestId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        document.getElementById(`request-${requestId}`).remove();
+        checkEmptyState('#received .row');
+        closeModal();
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to reject request');
+      }
+
+    } else if (actionType === 'cancel') {
+      // Logic for Canceling a sent request
+      const response = await fetch(`/user/search/${targetUserId}/follow`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        document.getElementById(`sent-${requestId}`).remove();
+        checkEmptyState('#sent .row');
+        closeModal();
+      } else {
+        throw new Error('Failed to cancel request');
+      }
+    }
+  } catch (error) {
+    console.error('Action error:', error);
+    Swal.fire('Error', error.message || 'An error occurred', 'error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerText = originalText;
+  }
+});
+
+// Helper to check if a tab is empty after deletion and reload if necessary
+function checkEmptyState(selector) {
+  const container = document.querySelector(selector);
+  if (container && container.children.length === 0) {
+    location.reload();
+  }
+}
+
+// Helper to close the modal programmatically
+function closeModal() {
+  document.getElementById('deleteConfirmationModal-close').click();
+}
+</script>

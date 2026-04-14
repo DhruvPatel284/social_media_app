@@ -1,0 +1,73 @@
+<%- contentFor('HeaderCss') %>
+    <link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+    <%- contentFor('body') %>
+
+        <div class="row justify-content-center">
+            <div class="col-xxl-6 col-xl-8 col-lg-10">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <a href="/user/chats" class="btn btn-ghost-secondary btn-icon btn-sm">
+                            <i class="ri-arrow-left-line"></i>
+                        </a>
+                        <h5 class="mb-0">Create New Group</h5>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- Group name -->
+                        <div class="mb-4">
+                            <label for="groupNameInput" class="form-label fw-semibold">Group Name <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" id="groupNameInput" class="form-control"
+                                placeholder="Enter a name for your group..." maxlength="255" />
+                            <div class="invalid-feedback" id="groupNameError">Please enter a group name.</div>
+                        </div>
+
+                        <!-- Member search -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Add Members</label>
+                            <p class="text-muted fs-13">Select from your followers &amp; following.</p>
+                            <div class="search-box mb-3">
+                                <input type="text" class="form-control bg-light border-light" id="memberSearchInput"
+                                    placeholder="Search people..." />
+                                <i class="ri-search-2-line search-icon"></i>
+                            </div>
+
+                            <!-- Empty state -->
+                            <div id="noNetworkMsg" class="text-center text-muted py-4 d-none">
+                                <i class="ri-group-line fs-40 opacity-50 d-block mb-2"></i>
+                                <p class="mb-0">You have no followers or following yet.</p>
+                            </div>
+
+                            <!-- User list -->
+                            <div id="networkList" class="list-group" style="max-height: 360px; overflow-y: auto;"></div>
+                        </div>
+
+                        <!-- Selected count badge -->
+                        <div class="mb-4">
+                            <span class="badge bg-primary-subtle text-primary fs-12" id="selectedCountBadge">0 members
+                                selected</span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button id="createGroupBtn" class="btn btn-success">
+                                <i class="ri-check-line me-1"></i> Create Group
+                            </button>
+                            <a href="/user/chats" class="btn btn-light">Cancel</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <%- contentFor('FooterJs') %>
+            <script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+            <script>
+                window.__CREATE_GROUP_CONFIG__ = {
+                    apiBase: '/user/chats/api',
+                    // Server-side pre-populated network for fast first render
+                    initialNetwork: <% - JSON.stringify(network) %>,
+                };
+            </script>
+            <script src="/assets/js/pages/create-group.init.js"></script>

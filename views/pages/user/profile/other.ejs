@@ -1,0 +1,372 @@
+<%- contentFor('HeaderCss') %>
+<link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+<style>
+  .profile-cover {
+    height: 200px;
+    background: linear-gradient(135deg, #405189 0%, #0ab39c 100%);
+    position: relative;
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+  }
+  .profile-avatar-wrapper {
+    position: absolute;
+    bottom: -60px;
+    left: 30px;
+  }
+  .profile-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    object-fit: cover;
+    background: #fff;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  .avatar-circle-profile {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    font-weight: 700;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  .post-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .post-grid-item {
+    position: relative;
+    padding-top: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  }
+  .post-grid-item img,
+  .post-grid-item video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  .post-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    color: white;
+    font-size: 1.2rem;
+  }
+  .post-grid-item:hover img,
+  .post-grid-item:hover video {
+    transform: scale(1.05);
+  }
+  .post-grid-item:hover .post-overlay {
+    opacity: 1;
+  }
+</style>
+
+<%- contentFor('body') %>
+
+<div class="row">
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="profile-cover">
+        <div class="profile-avatar-wrapper">
+          <% if (profileUser.profile_image) { %>
+            <img src="/uploads/users/<%= profileUser.profile_image %>" class="profile-avatar-large" alt="<%= profileUser.name %>">
+          <% } else { %>
+            <div class="avatar-circle-profile bg-info-subtle text-info">
+              <%= profileUser.name.charAt(0).toUpperCase() %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+      
+      <div class="card-body pt-0 pt-sm-4">
+        <div class="d-flex justify-content-end mt-3 mt-sm-0 mb-4">
+          
+          <% if (followStatus === 'accepted') { %>
+            <button 
+              class="btn btn-success follow-btn"
+              id="followBtn"
+              data-user-id="<%= profileUser.id %>"
+              data-status="accepted"
+              data-bs-toggle="modal" 
+              data-bs-target="#actionConfirmationModal"
+              onclick="prepareAction('unfollow')"
+            >
+              <i class="ri-user-follow-line align-bottom me-1"></i> Following
+            </button>
+          <% } else if (followStatus === 'pending') { %>
+            <button 
+              class="btn btn-secondary follow-btn"
+              id="followBtn"
+              data-user-id="<%= profileUser.id %>"
+              data-status="pending"
+              data-bs-toggle="modal" 
+              data-bs-target="#actionConfirmationModal"
+              onclick="prepareAction('cancel')"
+            >
+              <i class="ri-time-line align-bottom me-1"></i> Requested
+            </button>
+          <% } else { %>
+            <button 
+              class="btn btn-primary follow-btn"
+              id="followBtn"
+              data-user-id="<%= profileUser.id %>"
+              data-status="none"
+              onclick="sendFollowRequest()"
+            >
+              <i class="ri-user-add-line align-bottom me-1"></i> Follow
+            </button>
+          <% } %>
+
+          <% if (canChat) { %>
+            <a href="/user/chats/with/<%= profileUser.id %>" class="btn btn-soft-primary ms-2">
+              <i class="ri-question-answer-line align-bottom me-1"></i> Chat
+            </a>
+          <% } %>
+
+        </div>
+
+        <div class="row">
+          <div class="col-lg-6">
+            <h4 class="mb-1"><%= profileUser.name %></h4>
+            <p class="text-muted mb-3"><i class="ri-mail-line align-bottom me-1"></i><%= profileUser.email %></p>
+            <% if (profileUser.bio) { %>
+              <p class="mb-0 text-muted"><%= profileUser.bio %></p>
+            <% } %>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="row text-center">
+              <div class="col-4">
+                <h4 class="mb-0"><%= stats.postsCount %></h4>
+                <p class="text-muted mb-0">Posts</p>
+              </div>
+              <div class="col-4">
+                <a href="/user/profile/<%= profileUser.id %>/followers" class="text-dark d-block">
+                  <h4 class="mb-0"><%= stats.followersCount %></h4>
+                  <p class="text-muted mb-0">Followers</p>
+                </a>
+              </div>
+              <div class="col-4">
+                <a href="/user/profile/<%= profileUser.id %>/following" class="text-dark d-block">
+                  <h4 class="mb-0"><%= stats.followingCount %></h4>
+                  <p class="text-muted mb-0">Following</p>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header align-items-center d-flex">
+        <h5 class="card-title mb-0 flex-grow-1"><%= profileUser.name.split(' ')[0] %>'s Posts</h5>
+      </div>
+      
+      <div class="card-body">
+        <% if (isFollowing) { %>
+          <% if (posts && posts.length > 0) { %>
+            <div class="post-grid">
+              <% posts.forEach(function(post) { %>
+                <div class="post-grid-item" onclick="viewPost(<%= post.id %>)">
+                  <% if (post.media && post.media.length > 0) { %>
+                    <% const firstMedia = post.media[0]; %>
+                    <% if (firstMedia.type === 'image') { %>
+                      <img src="/uploads/posts/<%= firstMedia.filename %>" alt="Post">
+                    <% } else { %>
+                      <video muted>
+                        <source src="/uploads/posts/<%= firstMedia.filename %>" type="video/mp4">
+                      </video>
+                    <% } %>
+                  <% } else { %>
+                    <div class="bg-light d-flex align-items-center justify-content-center h-100 w-100 position-absolute top-0 start-0">
+                      <i class="ri-article-line text-muted opacity-50" style="font-size: 48px;"></i>
+                    </div>
+                  <% } %>
+                  <div class="post-overlay rounded">
+                    <div class="text-center">
+                      <span class="me-3"><i class="ri-heart-fill me-1 align-middle"></i> <%= post.likeCount %></span>
+                      <span><i class="ri-chat-3-fill me-1 align-middle"></i> <%= post.commentCount %></span>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <div class="text-center py-5">
+              <lord-icon src="https://cdn.lordicon.com/nocovwne.json" trigger="loop" colors="primary:#405189" style="width:100px;height:100px"></lord-icon>
+              <h5 class="mt-3">No posts yet</h5>
+              <p class="text-muted"><%= profileUser.name.split(' ')[0] %> hasn't shared any posts.</p>
+            </div>
+          <% } %>
+        <% } else { %>
+          <div class="text-center py-5">
+            <lord-icon src="https://cdn.lordicon.com/vusqmlgp.json" trigger="loop" colors="primary:#405189" style="width:100px;height:100px"></lord-icon>
+            <h5 class="mt-3">This Account is Private</h5>
+            
+            <% if (followStatus === 'pending') { %>
+              <p class="text-muted">Follow request sent. Waiting for approval.</p>
+            <% } else { %>
+              <p class="text-muted">Follow <%= profileUser.name.split(' ')[0] %> to see their posts.</p>
+              <button class="btn btn-primary mt-3" onclick="document.getElementById('followBtn').click()">
+                <i class="ri-user-add-line align-bottom me-1"></i> Follow
+              </button>
+            <% } %>
+
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade zoomIn" id="actionConfirmationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="actionConfirmationModal-close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="action-form" method="POST">
+          <div class="mt-2 text-center">
+            <lord-icon
+              src="https://cdn.lordicon.com/gsqxdxog.json"
+              trigger="loop"
+              colors="primary:#f7b84b,secondary:#f06548"
+              style="width: 100px; height: 100px"
+            ></lord-icon>
+            <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+              <h4>Are you sure?</h4>
+              <p class="text-muted mx-4 mb-0" id="action-modal-text">
+                Are you sure you want to perform this action?
+              </p>
+              <input type="hidden" id="modal-action-type" />
+            </div>
+          </div>
+          <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+            <button type="button" class="btn w-sm btn-light" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn w-sm btn-danger" id="action-confirmation">Yes, Proceed</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('FooterJs') %>
+<script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<script>
+// ─── VIEW POST ───────────────────────────────────────────────────────────────
+function viewPost(postId) {
+  window.location.href = `/user/posts/${postId}`;
+}
+
+// ─── FOLLOW LOGIC ────────────────────────────────────────────────────────────
+async function sendFollowRequest() {
+  const button = document.getElementById('followBtn');
+  const userId = button.dataset.userId;
+
+  try {
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sending...';
+
+    const response = await fetch(`/user/search/${userId}/follow`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Reload the page so the server can re-render the UI correctly
+      // (This ensures the Private account message updates to "Pending Approval")
+      location.reload();
+    } else {
+      Swal.fire('Error', data.error || 'Failed to send request', 'error');
+      button.innerHTML = '<i class="ri-user-add-line align-bottom me-1"></i> Follow';
+    }
+  } catch (error) {
+    console.error('Follow error:', error);
+    Swal.fire('Error', 'Failed to send follow request', 'error');
+    button.innerHTML = '<i class="ri-user-add-line align-bottom me-1"></i> Follow';
+  } finally {
+    button.disabled = false;
+  }
+}
+
+// ─── MODAL LOGIC (UNFOLLOW / CANCEL) ─────────────────────────────────────────
+function prepareAction(actionType) {
+  const modalText = document.getElementById('action-modal-text');
+  const confirmBtn = document.getElementById('action-confirmation');
+  document.getElementById('modal-action-type').value = actionType;
+
+  if (actionType === 'unfollow') {
+    modalText.innerText = "Are you sure you want to unfollow this user?";
+    confirmBtn.innerText = "Yes, Unfollow";
+  } else if (actionType === 'cancel') {
+    modalText.innerText = "Are you sure you want to cancel this follow request?";
+    confirmBtn.innerText = "Yes, Cancel Request";
+  }
+}
+
+document.getElementById('action-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const button = document.getElementById('followBtn');
+  const userId = button.dataset.userId;
+  
+  const submitBtn = document.getElementById('action-confirmation');
+  const originalText = submitBtn.innerText;
+
+  try {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing...';
+
+    // Both Unfollow and Cancel use the DELETE endpoint
+    const response = await fetch(`/user/search/${userId}/follow`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (response.ok) {
+      // Reload to safely reset posts state and buttons
+      location.reload();
+    } else {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to complete action');
+    }
+  } catch (error) {
+    console.error('Action error:', error);
+    Swal.fire('Error', error.message || 'An error occurred', 'error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerText = originalText;
+  }
+});
+</script>

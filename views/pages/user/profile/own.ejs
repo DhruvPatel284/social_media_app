@@ -1,0 +1,407 @@
+<%- contentFor('HeaderCss') %>
+<link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+<style>
+  .profile-cover {
+    height: 200px;
+    background: linear-gradient(135deg, #405189 0%, #0ab39c 100%);
+    position: relative;
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+  }
+  .profile-avatar-wrapper {
+    position: absolute;
+    bottom: -60px;
+    left: 30px;
+  }
+  .profile-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    object-fit: cover;
+    background: #fff;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  .avatar-circle-profile {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    font-weight: 700;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  .post-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .post-grid-item {
+    position: relative;
+    padding-top: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  }
+  .post-grid-item img,
+  .post-grid-item video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  .post-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    color: white;
+    font-size: 1.2rem;
+  }
+  .post-grid-item:hover img,
+  .post-grid-item:hover video {
+    transform: scale(1.05);
+  }
+  .post-grid-item:hover .post-overlay {
+    opacity: 1;
+  }
+</style>
+
+<%- contentFor('body') %>
+
+<div class="row">
+  <div class="col-lg-12">
+    <% if (success) { %>
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+      <i class="ri-checkbox-circle-line me-2 align-middle fs-16"></i><%= success %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <% } %>
+    
+    <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+      <i class="ri-error-warning-line me-2 align-middle fs-16"></i><%= error %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <% } %>
+
+    <div class="card">
+      <div class="profile-cover">
+        <div class="profile-avatar-wrapper">
+          <% if (profileUser.profile_image) { %>
+            <img src="/uploads/users/<%= profileUser.profile_image %>" class="profile-avatar-large" alt="<%= profileUser.name %>">
+          <% } else { %>
+            <div class="avatar-circle-profile bg-primary-subtle text-primary">
+              <%= profileUser.name.charAt(0).toUpperCase() %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+      
+      <div class="card-body pt-0 pt-sm-4">
+        <div class="d-flex justify-content-end mt-3 mt-sm-0 mb-4">
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+            <i class="ri-edit-line align-bottom me-1"></i> Edit Profile
+          </button>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-6">
+            <h4 class="mb-1"><%= profileUser.name %></h4>
+            <p class="text-muted mb-3"><i class="ri-mail-line align-bottom me-1"></i><%= profileUser.email %></p>
+            <% if (profileUser.bio) { %>
+              <p class="mb-0 text-muted"><%= profileUser.bio %></p>
+            <% } %>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="row text-center">
+              <div class="col-4">
+                <h4 class="mb-0"><%= stats.postsCount %></h4>
+                <p class="text-muted mb-0">Posts</p>
+              </div>
+              <div class="col-4">
+                <a href="/user/profile/<%= profileUser.id %>/followers" class="text-dark d-block">
+                  <h4 class="mb-0"><%= stats.followersCount %></h4>
+                  <p class="text-muted mb-0">Followers</p>
+                </a>
+              </div>
+              <div class="col-4">
+                <a href="/user/profile/<%= profileUser.id %>/following" class="text-dark d-block">
+                  <h4 class="mb-0"><%= stats.followingCount %></h4>
+                  <p class="text-muted mb-0">Following</p>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header align-items-center d-flex">
+        <h5 class="card-title mb-0 flex-grow-1">My Posts</h5>
+        <div class="flex-shrink-0">
+          <a href="/user/posts/create" class="btn btn-soft-primary btn-sm">
+            <i class="ri-add-line align-bottom me-1"></i> Create Post
+          </a>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <% if (posts && posts.length > 0) { %>
+          <div class="post-grid">
+            <% posts.forEach(function(post) { %>
+              <div class="post-grid-item" onclick="window.location.href='/user/posts/<%= post.id %>'">
+                <% if (post.media && post.media.length > 0) { %>
+                  <% const firstMedia = post.media[0]; %>
+                  <% if (firstMedia.type === 'image') { %>
+                    <img src="/uploads/posts/<%= firstMedia.filename %>" alt="Post">
+                  <% } else { %>
+                    <video muted>
+                      <source src="/uploads/posts/<%= firstMedia.filename %>" type="video/mp4">
+                    </video>
+                  <% } %>
+                <% } else { %>
+                  <div class="bg-light d-flex align-items-center justify-content-center h-100 w-100 position-absolute top-0 start-0">
+                    <i class="ri-article-line text-muted opacity-50" style="font-size: 48px;"></i>
+                  </div>
+                <% } %>
+                <div class="post-overlay rounded">
+                  <div class="text-center">
+                    <span class="me-3"><i class="ri-heart-fill me-1 align-middle"></i> <%= post.likeCount %></span>
+                    <span><i class="ri-chat-3-fill me-1 align-middle"></i> <%= post.commentCount %></span>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <div class="text-center py-5">
+            <lord-icon src="https://cdn.lordicon.com/nocovwne.json" trigger="loop" colors="primary:#405189" style="width:100px;height:100px"></lord-icon>
+            <h5 class="mt-3">No posts yet</h5>
+            <p class="text-muted">Share your first post with your followers!</p>
+            <a href="/user/posts/create" class="btn btn-primary mt-3">
+              <i class="ri-add-line align-bottom me-1"></i> Create Post
+            </a>
+          </div>
+        <% } %> 
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0">
+      <div class="modal-header bg-light p-3">
+        <h5 class="modal-title">Edit Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="text-center mb-4">
+          <div class="position-relative d-inline-block mb-3" id="image-preview-container">
+            <% if (profileUser.profile_image) { %>
+              <img id="current-profile-image" src="/uploads/users/<%= profileUser.profile_image %>" class="rounded-circle avatar-xl object-fit-cover shadow-sm" alt="Profile">
+            <% } else { %>
+              <div id="avatar-placeholder" class="avatar-circle-profile bg-primary-subtle text-primary mx-auto" style="width: 100px; height: 100px; font-size: 40px;">
+                <%= profileUser.name.charAt(0).toUpperCase() %>
+              </div>
+            <% } %>
+            
+            <img id="preview-img" src="" class="rounded-circle avatar-xl object-fit-cover shadow-sm" style="display: none;" alt="New Profile Preview">
+          </div>
+
+          <div class="d-flex justify-content-center gap-2 align-items-center">
+            <form action="/user/profile/upload-image" method="POST" enctype="multipart/form-data" class="d-flex flex-column align-items-center gap-2">
+              <div class="d-flex gap-2">
+                <input type="file" name="profile_image" id="profile-image-input" class="form-control form-control-sm" style="max-width: 220px;" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" required>
+                <button type="submit" class="btn btn-sm btn-success">Upload</button>
+              </div>
+              <small class="text-muted">Max 2MB. JPEG, PNG, GIF, WebP only.</small>
+            </form>
+            
+            <% if (profileUser.profile_image) { %>
+              <form action="/user/profile/delete-image" method="POST" class="m-0 mb-4">
+                <button type="submit" class="btn btn-sm btn-soft-danger">Remove</button>
+              </form>
+            <% } %>
+          </div>
+        </div>
+
+        <hr class="border-dashed mb-4">
+
+        <form id="profileUpdateForm" action="/user/profile?_method=PUT" method="POST">
+          <div class="mb-3">
+            <label class="form-label">Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control <%= errors && errors.name ? 'is-invalid' : '' %>" name="name" value="<%= profileUser.name %>" placeholder="Enter your name" required>
+            <% if (errors && errors.name) { %>
+              <div class="invalid-feedback"><%= errors.name[0] %></div>
+            <% } %>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" class="form-control <%= errors && errors.email ? 'is-invalid' : '' %>" name="email" value="<%= profileUser.email %>" placeholder="Enter your email" required>
+            <% if (errors && errors.email) { %>
+              <div class="invalid-feedback"><%= errors.email[0] %></div>
+            <% } %>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Bio</label>
+            <textarea class="form-control" name="bio" rows="4" placeholder="Tell us about yourself..."><%= profileUser.bio || '' %></textarea>
+          </div>
+        </form>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="profileUpdateForm" class="btn btn-primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('FooterJs') %>
+<script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<script>
+// --- Image Validation & Preview Logic ---
+const profileImageInput = document.getElementById('profile-image-input');
+const previewImg = document.getElementById('preview-img');
+const currentImage = document.getElementById('current-profile-image');
+const avatarPlaceholder = document.getElementById('avatar-placeholder');
+
+if (profileImageInput) {
+  profileImageInput.addEventListener('change', function() {
+    const file = this.files[0];
+    
+    if (!file) {
+      previewImg.style.display = 'none';
+      if (currentImage) currentImage.style.display = 'inline-block';
+      if (avatarPlaceholder) avatarPlaceholder.style.display = 'flex';
+      return;
+    }
+    
+    // Validate file type
+    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validImageTypes.includes(file.type)) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid File Type',
+        text: `"${file.name}" is not a valid image file. Please upload JPEG, PNG, GIF, or WebP.`,
+        confirmButtonColor: '#405189',
+      });
+      this.value = '';
+      previewImg.style.display = 'none';
+      return;
+    }
+    
+    // Validate file size (2MB)
+    const maxSize = 2 * 1024 * 1024; // 2 MB
+    if (file.size > maxSize) {
+      Swal.fire({
+        icon: 'error',
+        title: 'File Too Large',
+        text: `"${file.name}" exceeds the 2 MB size limit. Please choose a smaller image.`,
+        confirmButtonColor: '#405189',
+      });
+      this.value = '';
+      previewImg.style.display = 'none';
+      return;
+    }
+    
+    // Show live preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      previewImg.src = e.target.result;
+      previewImg.style.display = 'inline-block';
+      
+      // Hide old images
+      if (currentImage) currentImage.style.display = 'none';
+      if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// --- Following/Followers Modal Logic ---
+function showFollowers(userId) {
+  fetch(`/user/profile/followers/${userId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        let html = '<div class="list-group list-group-flush">';
+        data.followers.forEach(user => {
+          html += `<a href="/user/profile/${user.id}" class="list-group-item list-group-item-action">
+            <div class="d-flex align-items-center">
+               <div class="flex-grow-1 ms-2 text-start">${user.name}</div>
+            </div>
+          </a>`;
+        });
+        html += '</div>';
+        
+        Swal.fire({
+          title: '<h5 class="fs-18 mb-0">Followers</h5>',
+          html: html,
+          width: 400,
+          showConfirmButton: false,
+          showCloseButton: true,
+          customClass: {
+            popup: 'card'
+          }
+        });
+      }
+    });
+}
+
+function showFollowing(userId) {
+  fetch(`/user/profile/following/${userId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        let html = '<div class="list-group list-group-flush">';
+        data.following.forEach(user => {
+          html += `<a href="/user/profile/${user.id}" class="list-group-item list-group-item-action">
+            <div class="d-flex align-items-center">
+               <div class="flex-grow-1 ms-2 text-start">${user.name}</div>
+            </div>
+          </a>`;
+        });
+        html += '</div>';
+        
+        Swal.fire({
+          title: '<h5 class="fs-18 mb-0">Following</h5>',
+          html: html,
+          width: 400,
+          showConfirmButton: false,
+          showCloseButton: true,
+          customClass: {
+            popup: 'card'
+          }
+        });
+      }
+    });
+}
+</script>

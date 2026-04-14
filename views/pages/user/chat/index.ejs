@@ -1,0 +1,221 @@
+<%- contentFor('HeaderCss') %>
+  <link rel="stylesheet" href="/assets/libs/glightbox/css/glightbox.min.css" />
+  <link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+  <%- contentFor('body') %>
+
+    <div class="chat-wrapper d-lg-flex gap-1 mx-n4 mt-n4 p-1">
+      <div class="chat-leftsidebar">
+        <div class="px-4 pt-4 mb-3">
+          <div class="d-flex align-items-start">
+            <div class="flex-grow-1">
+              <h5 class="mb-4">Chats</h5>
+            </div>
+          </div>
+          <div class="search-box">
+            <input type="text" class="form-control bg-light border-light" placeholder="Search here..."
+              id="chatSearchInput" />
+            <i class="ri-search-2-line search-icon"></i>
+          </div>
+        </div>
+
+        <div class="tab-content text-muted">
+          <div class="tab-pane active" id="chats" role="tabpanel">
+            <div class="chat-room-list pt-3" data-simplebar>
+
+              <!-- Direct Messages -->
+              <div class="d-flex align-items-center px-4 mb-2">
+                <div class="flex-grow-1">
+                  <h4 class="mb-0 fs-11 text-muted text-uppercase">Direct Messages</h4>
+                </div>
+              </div>
+              <div class="chat-message-list">
+                <ul class="list-unstyled chat-list chat-user-list" id="userList"></ul>
+              </div>
+
+              <!-- Group Chats -->
+              <div class="d-flex align-items-center px-4 mb-2 mt-3">
+                <div class="flex-grow-1">
+                  <h4 class="mb-0 fs-11 text-muted text-uppercase">Groups</h4>
+                </div>
+                <div class="flex-shrink-0">
+                  <a href="/user/chats/group/new" class="btn btn-soft-success btn-sm" title="Create New Group">
+                    <i class="ri-add-line align-bottom"></i> New Group
+                  </a>
+                </div>
+              </div>
+              <div class="chat-message-list">
+                <ul class="list-unstyled chat-list chat-user-list" id="groupList"></ul>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="user-chat w-100 overflow-hidden" id="chat-main-area">
+        <div class="chat-content d-lg-flex">
+          <div class="w-100 overflow-hidden position-relative">
+            <div class="position-relative" id="users-chat">
+              <div class="p-3 user-chat-topbar">
+                <div class="row align-items-center">
+                  <div class="col-sm-4 col-8">
+                    <div class="d-flex align-items-center">
+                      <div class="flex-shrink-0 d-block d-lg-none me-3">
+                        <a href="javascript:void(0);" class="user-chat-remove fs-18 p-1">
+                          <i class="ri-arrow-left-s-line align-bottom"></i>
+                        </a>
+                      </div>
+                      <div class="flex-grow-1 overflow-hidden">
+                        <div class="d-flex align-items-center">
+                          <div class="flex-shrink-0 chat-user-img user-own-img align-self-center me-3 ms-0">
+                            <img src="/assets/images/users/user-dummy-img.jpg"
+                              class="rounded-circle avatar-xs chat-header-img" alt="" />
+                            <span class="user-status"></span>
+                          </div>
+                          <div class="flex-grow-1 overflow-hidden">
+                            <h5 class="text-truncate mb-0 fs-16">
+                              <a class="text-reset username" href="javascript:void(0);">Select a chat</a>
+                            </h5>
+                            <p class="text-truncate text-muted fs-14 mb-0 userStatus">
+                              <small id="chat-header-sub"></small>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-8 col-4">
+                    <ul class="list-inline user-chat-nav text-end mb-0">
+                      <li class="list-inline-item d-none d-lg-inline-block m-0">
+                        <button type="button" class="btn btn-ghost-secondary btn-icon" data-bs-toggle="offcanvas"
+                          data-bs-target="#groupInfoCanvas" aria-controls="groupInfoCanvas" id="infoCanvasBtn">
+                          <i data-feather="info" class="icon-sm"></i>
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chat-conversation p-3 p-lg-4" id="chat-conversation" data-simplebar>
+                <div id="elmLoader" class="text-center">
+                  <div class="spinner-border text-primary avatar-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+                <ul class="list-unstyled chat-conversation-list" id="users-conversation"></ul>
+              </div>
+
+              <div class="chat-input-section p-3 p-lg-4">
+                <form id="chatinput-form">
+                  <div class="row g-0 align-items-center">
+                    <div class="col-auto">
+                      <div class="chat-input-links me-2">
+                        <div class="links-list-item">
+                          <button type="button" class="btn btn-link text-decoration-none emoji-btn" id="emoji-btn">
+                            <i class="bx bx-smile align-middle"></i>
+                          </button>
+                        </div>
+                        <div class="links-list-item">
+                          <button type="button" class="btn btn-link text-decoration-none" id="attach-file-btn"
+                            title="Attach file">
+                            <i class="ri-attachment-2 align-middle fs-16"></i>
+                          </button>
+                          <input type="file" id="chat-file-input" class="d-none"
+                            accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="chat-input-feedback">Please Enter a Message</div>
+                      <input type="text" class="form-control chat-input bg-light border-light" id="chat-input"
+                        placeholder="Type your message..." autocomplete="off" />
+                    </div>
+                    <div class="col-auto">
+                      <div class="chat-input-links ms-2">
+                        <div class="links-list-item">
+                          <button type="submit" class="btn btn-success chat-send waves-effect waves-light">
+                            <i class="ri-send-plane-2-fill align-bottom"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info / Group Members Offcanvas -->
+    <div class="offcanvas offcanvas-end border-0" tabindex="-1" id="groupInfoCanvas">
+      <div class="offcanvas-header border-bottom p-3">
+        <h5 class="offcanvas-title" id="groupInfoTitle">Info</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body profile-offcanvas p-0">
+
+        <!-- Direct chat: user info -->
+        <div id="directInfoPanel" class="p-3 text-center d-none">
+          <img src="/assets/images/users/user-dummy-img.jpg" alt=""
+            class="avatar-lg img-thumbnail rounded-circle mx-auto profile-img" id="directInfoImg" />
+          <div class="mt-3">
+            <h5 class="fs-16 mb-1"><a href="javascript:void(0);" class="link-primary username">Select a chat</a></h5>
+          </div>
+        </div>
+
+        <!-- Group chat: members panel -->
+        <div id="groupInfoPanel" class="d-none">
+          <div class="p-3 border-bottom">
+            <div class="d-flex align-items-center">
+              <div class="avatar-md me-3">
+                <div class="avatar-title rounded-circle bg-soft-primary text-primary fs-24">
+                  <i class="ri-group-line"></i>
+                </div>
+              </div>
+              <div>
+                <h5 class="mb-0 fs-16 group-canvas-name"></h5>
+                <p class="text-muted mb-0 fs-13"><span id="memberCountLabel">0</span> members</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add member section — shown only to creator -->
+          <div id="addMemberSection" class="p-3 border-bottom d-none">
+            <h6 class="text-muted text-uppercase fs-11 mb-2">Add Member</h6>
+            <div class="input-group">
+              <select class="form-select form-select-sm" id="addMemberSelect">
+                <option value="">Select a person...</option>
+              </select>
+              <button class="btn btn-sm btn-success" id="addMemberBtn">
+                <i class="ri-user-add-line"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Members list -->
+          <div class="p-3">
+            <h6 class="text-muted text-uppercase fs-11 mb-2">Members</h6>
+            <ul class="list-unstyled" id="groupMembersList"></ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <%- contentFor('FooterJs') %>
+      <script src="/assets/libs/glightbox/js/glightbox.min.js"></script>
+      <script src="/assets/libs/fg-emoji-picker/fgEmojiPicker.js"></script>
+      <script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+      <script>
+        window.__CHAT_CONFIG__ = {
+          mode: 'sidebar',
+          apiBase: '/user/chats/api',
+          selfUserId: '<%= user.id %>',
+        };
+      </script>
+      <script src="/socket.io/socket.io.js"></script>
+      <script src="/assets/js/pages/user-chat.init.js"></script>

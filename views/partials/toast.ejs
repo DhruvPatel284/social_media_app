@@ -1,0 +1,23 @@
+<% if (locals.toast) { %>
+<script>
+  const options = {
+    error: {
+      style: {
+        background: 'linear-gradient(to right, #ff5f6d, #ffc371)',
+      },
+    },
+    success: {
+      style: {
+        background: 'linear-gradient(to right, #56ab2f, #a8e063)',
+      },
+    },
+  };
+  Toastify({
+    text: '<%= toast.message %>',
+    duration: 3000,
+    gravity: 'bottom',
+    position: 'right',
+    ...options['<%= toast.type %>'],
+  }).showToast();
+</script>
+<% } %>

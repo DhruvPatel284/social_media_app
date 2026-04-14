@@ -1,0 +1,91 @@
+<!-- ========== User Menu ========== -->
+<div class="app-menu navbar-menu">
+ <!-- LOGO -->
+ <div class="navbar-brand-box">
+  <!-- Dark Logo-->
+  <a href="/user/dashboard" class="logo logo-dark">
+   <span class="logo-sm">
+    <img src="/assets/images/logo-sm.png" alt="" height="22">
+   </span>
+   <span class="logo-lg">
+    <img src="/assets/images/logo-dark.png" alt="" height="17">
+   </span>
+  </a>
+  <!-- Light Logo-->
+  <a href="/user/dashboard" class="logo logo-light">
+   <span class="logo-sm">
+    <img src="/assets/images/SST-blue.png" alt="" height="22">
+   </span>
+   <span class="logo-lg">
+    <img src="/assets/images/SST-blue.png" alt="" height="17">
+   </span>
+  </a>
+  <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover">
+   <i class="ri-record-circle-line"></i>
+  </button>
+ </div>
+
+ <div id="scrollbar">
+  <div class="container-fluid">
+
+   <div id="two-column-menu">
+   </div>
+   <ul class="navbar-nav" id="navbar-nav">
+    <li class="menu-title"><span data-key="t-menu">Menu</span></li>
+
+    <ul class="nav nav-sm flex-column">
+     <!-- Home / Feed -->
+     <li class="nav-item">
+      <a href="/user/dashboard" class="nav-link <%= isActive('/user/dashboard') || isActive('/user') ? 'active' : '' %>">
+        <i class="ri-home-5-line"></i> <span data-key="t-home">Home</span>
+      </a>
+     </li>
+
+     <!-- Search Users -->
+     <li class="nav-item">
+      <a href="/user/search" class="nav-link <%= isActive('/user/search') ? 'active' : '' %>">
+        <i class="ri-search-line"></i> <span data-key="t-search">Search</span>
+      </a>
+     </li>
+
+     <!-- User Profile -->
+     <li class="nav-item">
+      <a href="/user/profile" class="nav-link <%= isActive('/user/profile') ? 'active' : '' %>">
+        <i class="ri-user-line"></i> <span data-key="t-profile">Profile</span>
+      </a>
+     </li>
+
+     <!-- Notifications -->
+     <li class="nav-item">
+      <a href="/user/notifications" class="nav-link <%= isActive('/user/notifications') ? 'active' : '' %>">
+        <i class="ri-notification-3-line"></i> 
+        <span data-key="t-notifications">Notifications</span>
+        <!-- Badge for unread count (optional - can be populated dynamically) -->
+        <% if (typeof unreadCount !== 'undefined' && unreadCount > 0) { %>
+          <span class="badge rounded-pill bg-danger float-end"><%= unreadCount %></span>
+        <% } %>
+      </a>
+     </li>
+    </ul>
+
+    <!-- Optional: Quick Actions Section -->
+    <li class="menu-title mt-4"><span data-key="t-actions">Quick Actions</span></li>
+    
+    <ul class="nav nav-sm flex-column">
+     <li class="nav-item">
+      <a href="/user/posts/create" class="nav-link">
+        <i class="ri-add-circle-line"></i> <span data-key="t-create-post">Create Post</span>
+      </a>
+     </li>
+    </ul>
+
+   </ul>
+  </div>
+  <!-- Sidebar -->
+ </div>
+
+ <div class="sidebar-background"></div>
+</div>
+<!-- Left Sidebar End -->
+<!-- Vertical Overlay-->
+<div class="vertical-overlay"></div>

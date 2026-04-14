@@ -1,0 +1,258 @@
+<%- contentFor('HeaderCss') %>
+<!-- Sweet Alert css-->
+<link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+<%- contentFor('body') %>
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card">
+      <div class="card-header align-items-center d-flex">
+        <h4 class="card-title mb-0 flex-grow-1">Create Post</h4>
+        <a href="/admin/posts" class="btn btn-sm btn-outline-secondary">
+          <i class="ri-arrow-left-line me-1"></i> Back to List
+        </a>
+      </div>
+
+      <div class="card-body">
+        <% if (errors && errors.general) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="ri-error-warning-line me-2"></i>
+          <%= errors.general[0] %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <% } %>
+        
+        <% if (errors && errors.media) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="ri-file-warning-line me-2"></i>
+          <%= errors.media[0] %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <% } %>
+
+        <form
+          action="/admin/posts"
+          method="POST"
+          enctype="multipart/form-data"
+          class="needs-validation"
+          novalidate
+        >
+          <!-- Content -->
+          <div class="mb-3">
+            <label for="content" class="form-label">Post Content *</label>
+            <textarea
+              class="form-control"
+              name="content"
+              id="content"
+              rows="5"
+              placeholder="What's on your mind?"
+              required
+            ><%= old ? old.content : '' %></textarea>
+            <% if (errors && errors.content) { %>
+            <div class="text-danger"><%= errors.content[0] %></div>
+            <% } %>
+          </div>
+
+          <!-- Images Upload -->
+          <div class="mb-3">
+            <label for="images" class="form-label">
+              Images <small class="text-muted">(Max 5 MB each, up to 10 images)</small>
+            </label>
+            <input
+              type="file"
+              class="form-control"
+              name="images"
+              id="images"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              multiple
+            />
+            <div class="form-text">
+              Allowed formats: JPEG, PNG, GIF, WebP
+            </div>
+            <% if (errors && errors.images) { %>
+            <div class="text-danger"><%= errors.images[0] %></div>
+            <% } %>
+          </div>
+
+          <!-- Videos Upload -->
+          <div class="mb-3">
+            <label for="videos" class="form-label">
+              Videos <small class="text-muted">(Max 15 MB each, up to 5 videos)</small>
+            </label>
+            <input
+              type="file"
+              class="form-control"
+              name="videos"
+              id="videos"
+              accept="video/mp4,video/mpeg,video/quicktime,video/x-msvideo"
+              multiple
+            />
+            <div class="form-text">
+              Allowed formats: MP4, MPEG, QuickTime, AVI
+            </div>
+            <% if (errors && errors.videos) { %>
+            <div class="text-danger"><%= errors.videos[0] %></div>
+            <% } %>
+          </div>
+
+          <!-- Preview Section -->
+          <div id="image-preview" class="mb-3"></div>
+          <div id="video-preview" class="mb-3"></div>
+
+          <!-- Submit -->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="ri-send-plane-line me-1"></i> Create Post
+            </button>
+            <a href="/admin/posts" class="btn btn-light">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('FooterJs') %>
+
+<!-- Sweet Alerts js -->
+<script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<script>
+  // Validate image file types
+  document.getElementById('images').addEventListener('change', function (e) {
+    const preview = document.getElementById('image-preview');
+    preview.innerHTML = '';
+    
+    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5 MB
+    const files = Array.from(this.files);
+    const validFiles = [];
+    
+    for (const file of files) {
+      // Check file type
+      if (!validImageTypes.includes(file.type)) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Invalid File Type',
+          text: `"${file.name}" is not a valid image file. Please upload JPEG, PNG, GIF, or WebP images only.`,
+          confirmButtonColor: '#3085d6',
+        });
+        continue;
+      }
+      
+      // Check file size
+      if (file.size > maxSize) {
+        Swal.fire({
+          icon: 'error',
+          title: 'File Too Large',
+          text: `"${file.name}" exceeds the 5 MB size limit. Please choose a smaller image.`,
+          confirmButtonColor: '#3085d6',
+        });
+        continue;
+      }
+      
+      validFiles.push(file);
+    }
+    
+    // Clear input and set only valid files
+    if (validFiles.length !== files.length) {
+      const dataTransfer = new DataTransfer();
+      validFiles.forEach(file => dataTransfer.items.add(file));
+      this.files = dataTransfer.files;
+    }
+    
+    // Show previews for valid files
+    if (validFiles.length > 0) {
+      const title = document.createElement('h6');
+      title.className = 'mb-2';
+      title.textContent = 'Image Previews:';
+      preview.appendChild(title);
+      
+      const row = document.createElement('div');
+      row.className = 'd-flex flex-wrap gap-2';
+      
+      validFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const img = document.createElement('img');
+          img.src = event.target.result;
+          img.className = 'img-thumbnail';
+          img.style.maxWidth = '150px';
+          img.style.maxHeight = '150px';
+          img.style.objectFit = 'cover';
+          row.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+      
+      preview.appendChild(row);
+    }
+  });
+
+  // Validate video file types
+  document.getElementById('videos').addEventListener('change', function (e) {
+    const preview = document.getElementById('video-preview');
+    preview.innerHTML = '';
+    
+    const validVideoTypes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo'];
+    const maxSize = 15 * 1024 * 1024; // 15 MB
+    const files = Array.from(this.files);
+    const validFiles = [];
+    
+    for (const file of files) {
+      // Check file type
+      if (!validVideoTypes.includes(file.type)) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Invalid File Type',
+          text: `"${file.name}" is not a valid video file. Please upload MP4, MPEG, QuickTime, or AVI videos only.`,
+          confirmButtonColor: '#3085d6',
+        });
+        continue;
+      }
+      
+      // Check file size
+      if (file.size > maxSize) {
+        Swal.fire({
+          icon: 'error',
+          title: 'File Too Large',
+          text: `"${file.name}" exceeds the 15 MB size limit. Please choose a smaller video.`,
+          confirmButtonColor: '#3085d6',
+        });
+        continue;
+      }
+      
+      validFiles.push(file);
+    }
+    
+    // Clear input and set only valid files
+    if (validFiles.length !== files.length) {
+      const dataTransfer = new DataTransfer();
+      validFiles.forEach(file => dataTransfer.items.add(file));
+      this.files = dataTransfer.files;
+    }
+    
+    // Show previews for valid files
+    if (validFiles.length > 0) {
+      const title = document.createElement('h6');
+      title.className = 'mb-2';
+      title.textContent = 'Video Previews:';
+      preview.appendChild(title);
+      
+      const row = document.createElement('div');
+      row.className = 'd-flex flex-wrap gap-2';
+      
+      validFiles.forEach(file => {
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(file);
+        video.className = 'border rounded';
+        video.style.maxWidth = '200px';
+        video.style.maxHeight = '150px';
+        video.controls = true;
+        row.appendChild(video);
+      });
+      
+      preview.appendChild(row);
+    }
+  });
+</script>

@@ -1,0 +1,254 @@
+<%- contentFor('HeaderCss') %>
+<link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+<style>
+  .media-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .media-preview-item {
+    position: relative;
+    padding-top: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #e9ebec;
+  }
+  .media-preview-item img,
+  .media-preview-item video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .media-preview-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+  }
+  .media-preview-remove:hover {
+    background: rgba(220, 53, 69, 1);
+  }
+</style>
+
+<%- contentFor('body') %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Create New Post</h5>
+      </div>
+      <div class="card-body">
+
+        <% if (errors && errors.general) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="ri-error-warning-line me-2"></i><%= errors.general[0] %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <% } %>
+
+        <form action="/user/posts/create" method="POST" enctype="multipart/form-data" id="createPostForm">
+          
+          <div class="mb-3">
+            <label class="form-label">What's on your mind? <span class="text-danger">*</span></label>
+            <textarea 
+              class="form-control <%= errors && errors.content ? 'is-invalid' : '' %>" 
+              name="content" 
+              rows="5" 
+              placeholder="Share your thoughts..."
+              required
+            ><%= old ? old.content : '' %></textarea>
+            <% if (errors && errors.content) { %>
+              <div class="invalid-feedback"><%= errors.content[0] %></div>
+            <% } %>
+            <div class="form-text">
+              <i class="ri-information-line me-1"></i>
+              Share your ideas, stories, or updates with your followers
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Add Photos & Videos</label>
+            <input 
+              type="file" 
+              class="form-control" 
+              name="media" 
+              id="mediaInput"
+              accept="image/*,video/*"
+              multiple
+              onchange="previewMedia()"
+            >
+            <div class="form-text">
+              <i class="ri-folder-image-line me-1"></i>
+              Upload up to 10 files. Images max 5MB (JPEG, PNG, GIF, WebP). Videos max 15MB (MP4, MPEG, QuickTime, AVI).
+            </div>
+          </div>
+
+          <div id="mediaPreview" class="media-preview-grid" style="display: none;"></div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4">
+            <a href="/user/dashboard" class="btn btn-light">
+              <i class="ri-arrow-left-line me-1"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              <i class="ri-send-plane-fill me-1"></i> Post
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<%- contentFor('FooterJs') %>
+<script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<script>
+let selectedMedia = [];
+
+// ─── PREVIEW MEDIA ───────────────────────────────────────────────────────────
+function previewMedia() {
+  const mediaInput = document.getElementById('mediaInput');
+  const files = Array.from(mediaInput.files);
+  
+  // Validate total file count
+  if (files.length > 10) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Too Many Files',
+      text: 'You can upload maximum 10 files in total.',
+    });
+    mediaInput.value = '';
+    return;
+  }
+
+  // Validate files
+  for (let file of files) {
+    if (file.type.startsWith('image/')) {
+      if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+          icon: 'error',
+          title: 'File Too Large',
+          text: `Image "${file.name}" exceeds the 5MB limit.`,
+        });
+        mediaInput.value = '';
+        return;
+      }
+    } else if (file.type.startsWith('video/')) {
+      if (file.size > 15 * 1024 * 1024) {
+        Swal.fire({
+          icon: 'error',
+          title: 'File Too Large',
+          text: `Video "${file.name}" exceeds the 15MB limit.`,
+        });
+        mediaInput.value = '';
+        return;
+      }
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid File Type',
+        text: `"${file.name}" is neither a valid image nor a video.`,
+      });
+      mediaInput.value = '';
+      return;
+    }
+  }
+
+  selectedMedia = files;
+  renderPreview();
+}
+
+// ─── RENDER PREVIEW ──────────────────────────────────────────────────────────
+function renderPreview() {
+  const preview = document.getElementById('mediaPreview');
+  
+  if (selectedMedia.length === 0) {
+    preview.style.display = 'none';
+    preview.innerHTML = '';
+    return;
+  }
+
+  preview.style.display = 'grid';
+  preview.innerHTML = '';
+
+  selectedMedia.forEach((file, index) => {
+    const item = document.createElement('div');
+    item.className = 'media-preview-item';
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      if (file.type.startsWith('image/')) {
+        item.innerHTML = `
+          <img src="${e.target.result}" alt="Preview">
+          <button type="button" class="media-preview-remove" onclick="removeMedia(${index})">
+            <i class="ri-close-line"></i>
+          </button>
+        `;
+      } else if (file.type.startsWith('video/')) {
+        item.innerHTML = `
+          <video src="${e.target.result}"></video>
+          <button type="button" class="media-preview-remove" onclick="removeMedia(${index})">
+            <i class="ri-close-line"></i>
+          </button>
+        `;
+      }
+    };
+    reader.readAsDataURL(file);
+
+    preview.appendChild(item);
+  });
+}
+
+// ─── REMOVE MEDIA ────────────────────────────────────────────────────────────
+function removeMedia(index) {
+  selectedMedia.splice(index, 1);
+  updateFileInput('mediaInput', selectedMedia);
+  renderPreview();
+}
+
+function updateFileInput(inputId, files) {
+  const dt = new DataTransfer();
+  files.forEach(file => dt.items.add(file));
+  document.getElementById(inputId).files = dt.files;
+}
+
+// ─── FORM VALIDATION ─────────────────────────────────────────────────────────
+document.getElementById('createPostForm').addEventListener('submit', function(e) {
+  const content = document.querySelector('textarea[name="content"]').value.trim();
+  
+  if (!content) {
+    e.preventDefault();
+    Swal.fire({
+      icon: 'error',
+      title: 'Content Required',
+      text: 'Please write something before posting',
+    });
+    return false;
+  }
+
+  // Show loading state
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Posting...';
+});
+</script>

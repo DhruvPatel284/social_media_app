@@ -1,0 +1,438 @@
+<%- contentFor('HeaderCss') %>
+<link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+<style>
+  .post-media-carousel {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    max-height: 600px;
+  }
+  .post-media-carousel img,
+  .post-media-carousel video {
+    width: 100%;
+    height: auto;
+    max-height: 600px;
+    object-fit: contain;
+  }
+  .comment-item {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .comment-item:last-child {
+    border-bottom: none;
+  }
+  .comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .avatar-circle-comment {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+  }
+</style>
+
+<%- contentFor('body') %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    
+    <div class="card">
+      <div class="card-body">
+        
+        <div class="d-flex align-items-center mb-3">
+          <a href="/user/profile/<%= post.user.id %>">
+            <% if (post.user.profile_image) { %>
+              <img src="/uploads/users/<%= post.user.profile_image %>" class="rounded-circle" width="48" height="48" alt="<%= post.user.name %>">
+            <% } else { %>
+              <div class="avatar-circle-comment bg-primary-subtle text-primary" style="width: 48px; height: 48px; font-size: 18px;">
+                <%= post.user.name.charAt(0).toUpperCase() %>
+              </div>
+            <% } %>
+          </a>
+          <div class="ms-3 flex-grow-1">
+            <a href="/user/profile/<%= post.user.id %>" class="fw-semibold text-dark d-block">
+              <%= post.user.name %>
+            </a>
+            <small class="text-muted">
+              <%= new Date(post.createdAt).toLocaleString('en-US', { 
+                month: 'long', 
+                day: 'numeric', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              }) %>
+            </small>
+          </div>
+          <% if (isOwner) { %>
+            <div class="dropdown">
+              <button class="btn btn-sm btn-ghost-secondary" type="button" data-bs-toggle="dropdown">
+                <i class="ri-more-2-fill"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item" href="/user/posts/<%= post.id %>/edit">
+                    <i class="ri-edit-line me-2"></i>Edit Post
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item text-danger" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" onclick="prepareDelete(<%= post.id %>)">
+                    <i class="ri-delete-bin-line me-2"></i>Delete Post
+                  </a>
+                </li>
+              </ul>
+            </div>
+          <% } %>
+        </div>
+
+        <p class="mb-3" style="white-space: pre-wrap;"><%= post.content %></p>
+
+        <% if (post.media && post.media.length > 0) { %>
+          <div class="post-media-carousel mb-3">
+            <% if (post.media.length === 1) { %>
+              <% const media = post.media[0]; %>
+              <% if (media.type === 'image') { %>
+                <img src="/uploads/posts/<%= media.filename %>" alt="Post image">
+              <% } else { %>
+                <video controls>
+                  <source src="/uploads/posts/<%= media.filename %>" type="video/mp4">
+                </video>
+              <% } %>
+            <% } else { %>
+              <div id="postMediaCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                  <% post.media.forEach((media, index) => { %>
+                    <button type="button" data-bs-target="#postMediaCarousel" data-bs-slide-to="<%= index %>" class="<%= index === 0 ? 'active' : '' %>"></button>
+                  <% }) %>
+                </div>
+                <div class="carousel-inner">
+                  <% post.media.forEach((media, index) => { %>
+                    <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                      <% if (media.type === 'image') { %>
+                        <img src="/uploads/posts/<%= media.filename %>" class="d-block w-100" alt="Post image">
+                      <% } else { %>
+                        <video controls class="d-block w-100">
+                          <source src="/uploads/posts/<%= media.filename %>" type="video/mp4">
+                        </video>
+                      <% } %>
+                    </div>
+                  <% }) %>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#postMediaCarousel" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#postMediaCarousel" data-bs-slide="next">
+                  <span class="carousel-control-next-icon"></span>
+                </button>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+
+        <div class="border-top pt-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <button 
+              class="btn btn-sm btn-ghost-primary like-btn" 
+              data-post-id="<%= post.id %>" 
+              data-liked="<%= post.isLiked %>"
+              onclick="toggleLike()"
+            >
+              <i class="<%= post.isLiked ? 'ri-heart-fill text-danger' : 'ri-heart-line' %>"></i>
+              <span class="like-count"><%= post.likeCount %></span> Likes
+            </button>
+            <div class="text-muted">
+              <i class="ri-chat-3-line me-1"></i>
+              <span id="commentCount"><%= post.commentCount %></span> Comments
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Comments</h5>
+      </div>
+      <div class="card-body p-0">
+        
+        <div class="p-3 border-bottom">
+          <div class="d-flex align-items-start">
+            <% if (user.profile_image) { %>
+              <img src="/uploads/users/<%= user.profile_image %>" class="comment-avatar me-2" alt="You">
+            <% } else { %>
+              <div class="avatar-circle-comment bg-primary-subtle text-primary me-2">
+                <%= user.name.charAt(0).toUpperCase() %>
+              </div>
+            <% } %>
+            <div class="flex-grow-1">
+              <textarea 
+                class="form-control" 
+                id="commentInput" 
+                rows="2" 
+                placeholder="Write a comment..."
+              ></textarea>
+              <button class="btn btn-primary btn-sm mt-2" onclick="submitComment()">
+                <i class="ri-send-plane-fill me-1"></i> Comment
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="commentsList">
+          <% if (comments && comments.length > 0) { %>
+            <% comments.forEach(function(comment) { %>
+              <div class="comment-item">
+                <div class="d-flex align-items-start">
+                  <a href="/user/profile/<%= comment.user.id %>">
+                    <% if (comment.user.profile_image) { %>
+                      <img src="/uploads/users/<%= comment.user.profile_image %>" class="comment-avatar me-2" alt="<%= comment.user.name %>">
+                    <% } else { %>
+                      <div class="avatar-circle-comment bg-secondary-subtle text-secondary me-2">
+                        <%= comment.user.name.charAt(0).toUpperCase() %>
+                      </div>
+                    <% } %>
+                  </a>
+                  <div class="flex-grow-1">
+                    <div class="bg-light rounded p-3">
+                      <a href="/user/profile/<%= comment.user.id %>" class="fw-semibold text-dark d-block mb-1">
+                        <%= comment.user.name %>
+                      </a>
+                      <p class="mb-0" style="white-space: pre-wrap;"><%= comment.comment %></p>
+                    </div>
+                    <small class="text-muted ms-2">
+                      <%= new Date(comment.createdAt).toLocaleString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      }) %>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <div class="text-center py-5" id="noComments">
+              <i class="ri-chat-3-line" style="font-size: 48px; color: #ccc;"></i>
+              <p class="text-muted mt-2">No comments yet. Be the first to comment!</p>
+            </div>
+          <% } %>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="deleteConfirmationModal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="deleteConfirmationModal-close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="delete-form" method="POST">
+          <div class="mt-2 text-center">
+            <lord-icon
+              src="https://cdn.lordicon.com/gsqxdxog.json"
+              trigger="loop"
+              colors="primary:#f7b84b,secondary:#f06548"
+              style="width: 100px; height: 100px"
+            ></lord-icon>
+            <div class="mt-4 pt-2 fs-15 mx-4 mx-sm-5">
+              <h4>Are you sure?</h4>
+              <p class="text-muted mx-4 mb-0">
+                Are you sure you want to remove this Post?
+              </p>
+              <input type="hidden" id="modal-row-id" />
+            </div>
+          </div>
+          <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+            <button type="button" class="btn w-sm btn-light" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn w-sm btn-danger" id="delete-confirmation">Yes, Delete It!</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('FooterJs') %>
+<script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<script>
+const postId = <%= post.id %>;
+const currentUserId = '<%= user.id %>';
+const currentUserName = '<%= user.name %>';
+const currentUserImage = '<%= user.profile_image || "" %>';
+
+// ─── TOGGLE LIKE ─────────────────────────────────────────────────────────────
+async function toggleLike() {
+  const button = document.querySelector('.like-btn');
+  const icon = button.querySelector('i');
+  const countSpan = button.querySelector('.like-count');
+  
+  try {
+    const response = await fetch(`/user/posts/${postId}/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      
+      if (data.isLiked) {
+        icon.className = 'ri-heart-fill text-danger';
+        button.dataset.liked = 'true';
+      } else {
+        icon.className = 'ri-heart-line';
+        button.dataset.liked = 'false';
+      }
+      
+      countSpan.textContent = data.likeCount;
+    }
+  } catch (error) {
+    console.error('Like error:', error);
+  }
+}
+
+// ─── SUBMIT COMMENT ──────────────────────────────────────────────────────────
+async function submitComment() {
+  const input = document.getElementById('commentInput');
+  const content = input.value.trim();
+
+  if (!content) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/user/posts/${postId}/comment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      
+      if (data.success) {
+        // Clear input
+        input.value = '';
+
+        // Remove "no comments" message if exists
+        const noComments = document.getElementById('noComments');
+        if (noComments) {
+          noComments.remove();
+        }
+
+        // Add comment to list
+        const commentsList = document.getElementById('commentsList');
+        const commentHTML = `
+          <div class="comment-item">
+            <div class="d-flex align-items-start">
+              <a href="/user/profile/${data.comment.user.id}">
+                ${data.comment.user.profile_image 
+                  ? `<img src="/uploads/users/${data.comment.user.profile_image}" class="comment-avatar me-2" alt="${data.comment.user.name}">`
+                  : `<div class="avatar-circle-comment bg-secondary-subtle text-secondary me-2">${data.comment.user.name.charAt(0).toUpperCase()}</div>`
+                }
+              </a>
+              <div class="flex-grow-1">
+                <div class="bg-light rounded p-3">
+                  <a href="/user/profile/${data.comment.user.id}" class="fw-semibold text-dark d-block mb-1">
+                    ${data.comment.user.name}
+                  </a>
+                  <p class="mb-0" style="white-space: pre-wrap;">${data.comment.content}</p>
+                </div>
+                <small class="text-muted ms-2">Just now</small>
+              </div>
+            </div>
+          </div>
+        `;
+        commentsList.insertAdjacentHTML('beforeend', commentHTML);
+
+        // Update comment count
+        const countSpan = document.getElementById('commentCount');
+        countSpan.textContent = parseInt(countSpan.textContent) + 1;
+      }
+    }
+  } catch (error) {
+    console.error('Comment error:', error);
+  }
+}
+
+// Submit on Enter (Shift+Enter for new line)
+document.getElementById('commentInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    submitComment();
+  }
+});
+
+// ─── DELETE POST LOGIC ───────────────────────────────────────────────────────
+
+// Function called by the dropdown button to set up the modal
+function prepareDelete(id) {
+  // Set the ID in the hidden input field inside the modal
+  document.getElementById('modal-row-id').value = id;
+}
+
+// Handle the form submission inside the modal
+document.getElementById('delete-form').addEventListener('submit', async function(e) {
+  e.preventDefault(); // Prevent standard form submission
+  
+  const idToDelete = document.getElementById('modal-row-id').value;
+  const submitBtn = document.getElementById('delete-confirmation');
+  const originalBtnText = submitBtn.innerHTML;
+
+  if (!idToDelete) return;
+
+  try {
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Deleting...';
+
+    const response = await fetch(`/user/posts/${idToDelete}`, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) {
+      // Redirect on success
+      window.location.href = '/user/dashboard';
+    } else {
+      // Show error using SweetAlert (since we included it in HeaderCss)
+      Swal.fire({
+        title: 'Error!',
+        text: 'Failed to delete the post.',
+        icon: 'error',
+        confirmButtonClass: 'btn btn-primary w-xs',
+        buttonsStyling: false
+      });
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText;
+    }
+  } catch (error) {
+    console.error('Delete error:', error);
+    Swal.fire({
+      title: 'Error!',
+      text: 'An unexpected error occurred.',
+      icon: 'error',
+      confirmButtonClass: 'btn btn-primary w-xs',
+      buttonsStyling: false
+    });
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnText;
+  }
+});
+</script>

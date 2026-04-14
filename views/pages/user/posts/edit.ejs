@@ -1,0 +1,349 @@
+<%- contentFor('HeaderCss') %>
+<link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+
+<style>
+  .existing-media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .existing-media-item {
+    position: relative;
+    padding-top: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #e9ebec;
+  }
+  .existing-media-item.marked-delete {
+    border-color: #dc3545;
+    opacity: 0.5;
+  }
+  .existing-media-item img,
+  .existing-media-item video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .media-delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+  }
+  .media-delete-btn:hover {
+    background: rgba(220, 53, 69, 1);
+  }
+  .media-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .media-preview-item {
+    position: relative;
+    padding-top: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #0ab39c;
+  }
+  .media-preview-item img,
+  .media-preview-item video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .media-preview-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+  }
+</style>
+
+<%- contentFor('body') %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Edit Post</h5>
+      </div>
+      <div class="card-body">
+
+        <% if (errors && errors.general) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="ri-error-warning-line me-2"></i><%= errors.general[0] %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <% } %>
+
+        <form action="/user/posts/<%= post.id %>/edit?_method=PUT" method="POST" enctype="multipart/form-data" id="editPostForm">
+          
+          <div class="mb-3">
+            <label class="form-label">Content <span class="text-danger">*</span></label>
+            <textarea 
+              class="form-control <%= errors && errors.content ? 'is-invalid' : '' %>" 
+              name="content" 
+              rows="5" 
+              required
+            ><%= post.content %></textarea>
+            <% if (errors && errors.content) { %>
+              <div class="invalid-feedback"><%= errors.content[0] %></div>
+            <% } %>
+          </div>
+
+          <% if (post.media && post.media.length > 0) { %>
+          <div class="mb-4">
+            <label class="form-label">Existing Media</label>
+            <p class="text-muted mb-2">
+              <i class="ri-information-line me-1"></i>
+              Click the red X button to mark media for deletion
+            </p>
+            <div class="existing-media-grid">
+              <% post.media.forEach(function(media) { %>
+                <div class="existing-media-item" id="media-<%= media.id %>" data-media-id="<%= media.id %>">
+                  <% if (media.type === 'image') { %>
+                    <img src="/uploads/posts/<%= media.filename %>" alt="Post media">
+                  <% } else { %>
+                    <video>
+                      <source src="/uploads/posts/<%= media.filename %>" type="video/mp4">
+                    </video>
+                  <% } %>
+                  <button type="button" class="media-delete-btn" onclick="toggleDeleteMedia(<%= media.id %>)">
+                    <i class="ri-close-line"></i>
+                  </button>
+                </div>
+              <% }) %>
+            </div>
+            <input type="hidden" name="deleteMediaIds" id="deleteMediaIds" value="">
+          </div>
+          <% } %>
+
+          <div class="mb-3">
+            <label class="form-label">Add New Photos & Videos</label>
+            <input 
+              type="file" 
+              class="form-control" 
+              name="media" 
+              id="mediaInput"
+              accept="image/*,video/*"
+              multiple
+              onchange="previewMedia()"
+            >
+            <div class="form-text">
+              <i class="ri-folder-image-line me-1"></i>
+              Upload new media (Max 10 total). Images max 5MB, Videos max 15MB. These will be added to your post.
+            </div>
+          </div>
+
+          <div id="mediaPreview" class="media-preview-grid" style="display: none;"></div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4">
+            <a href="/user/posts/<%= post.id %>" class="btn btn-light">
+              <i class="ri-arrow-left-line me-1"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              <i class="ri-save-line me-1"></i> Save Changes
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<%- contentFor('FooterJs') %>
+<script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<script>
+let selectedMedia = [];
+let mediaToDelete = new Set();
+
+// ─── TOGGLE DELETE MEDIA ─────────────────────────────────────────────────────
+function toggleDeleteMedia(mediaId) {
+  const mediaElement = document.getElementById(`media-${mediaId}`);
+  
+  if (mediaToDelete.has(mediaId)) {
+    // Unmark for deletion
+    mediaToDelete.delete(mediaId);
+    mediaElement.classList.remove('marked-delete');
+  } else {
+    // Mark for deletion
+    mediaToDelete.add(mediaId);
+    mediaElement.classList.add('marked-delete');
+  }
+  
+  // Update hidden input
+  document.getElementById('deleteMediaIds').value = Array.from(mediaToDelete).join(',');
+
+  // Re-trigger preview validation if there are files in the input (to check max count)
+  if(document.getElementById('mediaInput').files.length > 0) {
+    previewMedia();
+  }
+}
+
+// ─── PREVIEW NEW MEDIA ───────────────────────────────────────────────────────
+function previewMedia() {
+  const mediaInput = document.getElementById('mediaInput');
+  const files = Array.from(mediaInput.files);
+  
+  // Get current media count (excluding ones marked for deletion)
+  const currentMediaCount = <%= post.media ? post.media.length : 0 %> - mediaToDelete.size;
+  const newMediaCount = files.length;
+  const totalCount = currentMediaCount + newMediaCount;
+  
+  // Validate total file count
+  if (totalCount > 10) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Too Many Files',
+      text: `You can have maximum 10 media files. Current: ${currentMediaCount}, New: ${newMediaCount}`,
+    });
+    mediaInput.value = '';
+    selectedMedia = [];
+    renderPreview();
+    return;
+  }
+
+  // Validate files
+  for (let file of files) {
+    if (file.type.startsWith('image/')) {
+      if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+          icon: 'error',
+          title: 'File Too Large',
+          text: `Image "${file.name}" exceeds 5MB limit`,
+        });
+        mediaInput.value = '';
+        return;
+      }
+    } else if (file.type.startsWith('video/')) {
+      if (file.size > 15 * 1024 * 1024) {
+        Swal.fire({
+          icon: 'error',
+          title: 'File Too Large',
+          text: `Video "${file.name}" exceeds 15MB limit`,
+        });
+        mediaInput.value = '';
+        return;
+      }
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid File Type',
+        text: `"${file.name}" is neither a valid image nor a video.`,
+      });
+      mediaInput.value = '';
+      return;
+    }
+  }
+
+  selectedMedia = files;
+  renderPreview();
+}
+
+// ─── RENDER PREVIEW ──────────────────────────────────────────────────────────
+function renderPreview() {
+  const preview = document.getElementById('mediaPreview');
+  
+  if (selectedMedia.length === 0) {
+    preview.style.display = 'none';
+    preview.innerHTML = '';
+    return;
+  }
+
+  preview.style.display = 'grid';
+  preview.innerHTML = '<div class="col-12"><strong class="text-success">New Media to Upload:</strong></div>';
+
+  selectedMedia.forEach((file, index) => {
+    const item = document.createElement('div');
+    item.className = 'media-preview-item';
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      if (file.type.startsWith('image/')) {
+        item.innerHTML = `
+          <img src="${e.target.result}" alt="Preview">
+          <button type="button" class="media-preview-remove" onclick="removeNewMedia(${index})">
+            <i class="ri-close-line"></i>
+          </button>
+        `;
+      } else if (file.type.startsWith('video/')) {
+        item.innerHTML = `
+          <video src="${e.target.result}"></video>
+          <button type="button" class="media-preview-remove" onclick="removeNewMedia(${index})">
+            <i class="ri-close-line"></i>
+          </button>
+        `;
+      }
+    };
+    reader.readAsDataURL(file);
+
+    preview.appendChild(item);
+  });
+}
+
+// ─── REMOVE NEW MEDIA ────────────────────────────────────────────────────────
+function removeNewMedia(index) {
+  selectedMedia.splice(index, 1);
+  updateFileInput('mediaInput', selectedMedia);
+  renderPreview();
+}
+
+function updateFileInput(inputId, files) {
+  const dt = new DataTransfer();
+  files.forEach(file => dt.items.add(file));
+  document.getElementById(inputId).files = dt.files;
+}
+
+// ─── FORM VALIDATION ─────────────────────────────────────────────────────────
+document.getElementById('editPostForm').addEventListener('submit', function(e) {
+  const content = document.querySelector('textarea[name="content"]').value.trim();
+  
+  if (!content) {
+    e.preventDefault();
+    Swal.fire({
+      icon: 'error',
+      title: 'Content Required',
+      text: 'Post content cannot be empty',
+    });
+    return false;
+  }
+
+  // Show loading state
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Saving...';
+});
+</script>
